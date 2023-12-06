@@ -105,6 +105,21 @@ export class DappController {
     return contractAddress;
   }
 
+  @Post(':tokenId/set-uri')
+  async setTokenURI(
+    @Param('tokenId') tokenId: number,
+    @Body('tokenURI') tokenURI: string,
+  ): Promise<void> {
+
+    await this.dappService.setTokenURI(tokenId, tokenURI);
+  }
+
+  @Get(':tokenId/owner')
+  async getOwnerOfToken(@Param('tokenId') tokenId: number): Promise<string> {
+
+    return this.dappService.getOwnerOfToken(tokenId);
+  }
+
   private getWallet(): any {
     return this.dappService.getWallet();
   }

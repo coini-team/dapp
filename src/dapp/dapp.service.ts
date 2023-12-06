@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { Contract, HDNodeWallet, Wallet, ethers } from 'ethers';
 
@@ -270,6 +271,31 @@ export class DappService {
     console.log("to: " + to);
     console.log("value: " + value);
     return;
+  }
+
+  async setTokenURI(tokenId: number, tokenURI: string): Promise<void> {
+    const wallet = this.getWallet()
+    const contractERC721 = await this.getERC721Contract(wallet);
+    const owner = await contractERC721.ownerOf(tokenId);
+
+    if (owner !== await wallet.getAddress()) {
+      throw new Error('No tienes permiso para establecer el URI del token.');
+    }
+
+    // Llamar a la función del contrato para establecer el URI del token
+    await contractERC721.setTokenURI(tokenId, tokenURI);
+  }
+
+  async getOwnerOfToken(tokenId: number): Promise<string> {
+    const wallet = this.getWallet()
+    const contractERC721 = await this.getERC721Contract(wallet);
+
+    if (!(await contractERC721.ownerOf(tokenId)).call()) {
+      throw new Error('Token no existente');
+    }
+
+    // Llamar a la función del contrato para obtener el propietario del token
+    return await contractERC721.ownerOf(tokenId);;
   }
 
   async listenForEvent() {
