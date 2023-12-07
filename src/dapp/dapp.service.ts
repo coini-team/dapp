@@ -285,4 +285,27 @@ export class DappService {
       console.log('Array index:', index);
     });
   }
+
+  async ownerOfERC721(tokenId: string): Promise<string> {
+    const provider = new ethers.JsonRpcProvider(process.env.MUMBAI_TESNET_URL);
+    const contract = new ethers.Contract(this.ERC721FactoryAddress, abi , provider) ; 
+    try {
+      const owner = await contract.ownerOf(tokenId);
+      return owner;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getTokenURI(tokenId: string): Promise<string> {
+    const provider = new ethers.JsonRpcProvider(process.env.MUMBAI_TESNET_URL);
+    const contract = new ethers.Contract(this.ERC721FactoryAddress, abi, provider);
+    try {
+      const uri = await contract.tokenURI(tokenId);
+      return uri;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
+

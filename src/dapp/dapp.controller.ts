@@ -108,4 +108,16 @@ export class DappController {
   private getWallet(): any {
     return this.dappService.getWallet();
   }
+
+  @Get('owner/:tokenId')
+  async getOwnerOfERC721Token(@Param('tokenId') tokenId: string) {
+    const owner = await this.dappService.ownerOfERC721(tokenId);
+    return { owner };
+  }
+
+  @Get('token_URI/:tokenId')
+  async getUriOfToken(@Param('tokenId') tokenId: string) {
+    const tokenURI = await this.dappService.getTokenURI(tokenId);
+    return { tokenURI };
+  }
 }
