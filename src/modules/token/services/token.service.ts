@@ -14,10 +14,11 @@ export class TokenService {
 
   async deployERC20Token(
     wallet: Wallet,
-    tokenParams: { name: string; symbol: string; initialSupply: number },
+    tokenParams: { name: string; symbol: string; initialSupply: number; decimals: number },
   ): Promise<string> {
-    const { name, symbol, initialSupply } = tokenParams;
+    const { name, symbol, initialSupply, decimals } = tokenParams;
     const methodName = 'CreateNewERC20Token(string,string,uint256)';
+    //const methodName = 'CreateNewERC20Token';
 
     const contract = new ethers.Contract(
       this.configService.get(Blockchain.ERC20_FACTORY_ADDRESS),
@@ -25,9 +26,22 @@ export class TokenService {
       wallet,
     );
     try {
-      const result = await contract[methodName](name, symbol, initialSupply);
-      console.log(`ERC20 Smart Contract Method "${methodName}" Result:`, result);
-      return result;
+
+      console.log("initialSupply: " + initialSupply);
+      console.log("decimals: " + decimals);
+      const num = initialSupply * Math.pow(10, decimals);
+
+      console.log("num: " + num);
+      console.log("numb: " + BigInt(num));
+      console.log("numbs: " + BigInt(num).toString());
+
+      //const tx = await contract[methodName](name, symbol, BigInt(num));
+      const tx = await contract[methodName](name, symbol, 1500);
+      const response = await tx.wait();
+      console.log(`Smart Contract Method "${methodName}" tx:`, tx);
+      console.log(`Smart Contract Method "${methodName}" response:`, response);
+      const address = response.logs[0].address;
+      return address;
     } catch (error) {
       throw error;
     }

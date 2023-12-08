@@ -36,6 +36,7 @@ export class TokenController {
       name: string;
       symbol: string;
       initialSupply: number;
+      decimals: number
     },
   ): Promise<string> {
     // Get Wallet to Sign.
