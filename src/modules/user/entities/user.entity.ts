@@ -27,7 +27,7 @@ export class User {
   @Column({ name: 'email', nullable: true, length: 45, type: 'varchar' })
   email: string;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ name: 'password', nullable: false, length: 255, type: 'varchar' })
   password: string;
 
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
