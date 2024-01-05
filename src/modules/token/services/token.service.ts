@@ -4,20 +4,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 // Local Dependencies.
 import FactoryERC20_ABI from '../../../contracts/abis/FactoryERC20_ABI.json';
-import { Network } from 'src/modules/chain/entities/network.entity';
 import ERC20_ABI from '../../../contracts/abis/ERC20_ABI.json';
 import { ConfigService } from '../../../config/config.service';
 import { Blockchain } from '../../../config/config.keys';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { DeployTokenDto } from '../dto/deploy-token.dto';
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(Network)
-    private readonly NetworkRepository: Repository<Network>,
     ) {}
 
   async deployERC20Token(

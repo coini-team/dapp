@@ -4,21 +4,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 // Local Dependencies.
 import FactoryERC721_ABI from '../../../contracts/abis/FactoryERC721_ABI.json';
-import { WalletService } from '../../wallet/services/wallet.service';
-import { Network } from 'src/modules/chain/entities/network.entity';
 import { ConfigService } from '../../../config/config.service';
 import { Blockchain } from '../../../config/config.keys';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { DeployNftDto } from '../dto/deploy-nft.dto';
 
 @Injectable()
 export class NftService {
   constructor(
     private readonly configService: ConfigService,
-    private readonly walletService: WalletService,
-    @InjectRepository(Network)
-    private readonly NetworkRepository: Repository<Network>,
   ) {}
 
   /**

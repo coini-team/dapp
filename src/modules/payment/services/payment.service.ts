@@ -4,7 +4,6 @@ import { ReceiverWallet } from 'src/modules/wallet/entities/receiver-wallet.enti
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ethers } from 'ethers';
-import { Network } from 'src/modules/chain/entities/network.entity';
 import { SendPaymentDto } from '../dto/send-payment.dto';
 
 @Injectable()
@@ -14,21 +13,17 @@ export class PaymentService {
         private readonly walletRepository: Repository<Wallet>,
         @InjectRepository(ReceiverWallet)
         private readonly receiverWalletRepository: Repository<ReceiverWallet>,
-        @InjectRepository(Network)
-        private readonly NetworkRepository: Repository<Network>,
     ) { }
 
     // Función asincrónica para enviar tokens ERC-20
     async sendERC20tokens(
-        chain: string, 
+        //chain: string, 
         sendPayment: SendPaymentDto,
-        ) {
+        rpcUrl: string
+    )  {
         try {
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
             const { sender, token, amount } = sendPayment;
-            // Verifica si el parámetro 'chain' está presente
-            if (!chain) {
-                throw new NotFoundException("Falta el parametro 'chain' en el QueryParam");
-            }
 
             // Convierte el monto a un valor numérico
             const numericAmount = parseFloat(amount);
@@ -37,14 +32,6 @@ export class PaymentService {
             if (isNaN(numericAmount) || numericAmount < 0.0000001 || amount.length > 8) {
                 throw new NotFoundException("El valor de de envio no es válido.");
             }
-
-            // traer network url
-            const urlNetwork = await this.NetworkRepository.findOne({ name: chain });
-            if (!urlNetwork) {
-                throw new NotFoundException('Chain no encontrado en la base de datos');
-            }
-
-            const network = urlNetwork.rpc_url;
 
             // Traer la llave privada de la wallet sender 
             const senderWallet = await this.walletRepository.findOne({ address: sender });
@@ -55,7 +42,6 @@ export class PaymentService {
             const senderPrivateKey = senderWallet.privateKey;
 
             // Configures the provider and wallet using ethers.js
-            const provider = new ethers.JsonRpcProvider(network);
             const wallet = new ethers.Wallet(senderPrivateKey, provider);
 
             // Crea una instancia del contrato para el token ERC-20
