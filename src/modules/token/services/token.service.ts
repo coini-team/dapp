@@ -11,9 +11,7 @@ import { DeployTokenDto } from '../dto/deploy-token.dto';
 
 @Injectable()
 export class TokenService {
-  constructor(
-    private readonly configService: ConfigService,
-    ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   async deployERC20Token(
     wallet: Wallet,
@@ -39,8 +37,9 @@ export class TokenService {
     } catch (error) {
       console.error(error);
       if (error.code === 'INSUFFICIENT_FUNDS') {
-        const errorMessage = "Saldo insuficiente para cubrir el costo de la transacción";
-        
+        const errorMessage =
+          'Saldo insuficiente para cubrir el costo de la transacción';
+
         // Puedes lanzar una excepción personalizada si lo prefieres
         throw new NotFoundException(errorMessage);
       }
