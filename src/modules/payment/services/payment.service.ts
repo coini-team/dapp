@@ -1,84 +1,145 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Wallet } from 'src/modules/wallet/entities/wallet.entity';
-import { ReceiverWallet } from 'src/modules/wallet/entities/receiver-wallet.entity';
-import { Repository } from 'typeorm';
+// Third party Dependencies.
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ethers } from 'ethers';
+
+// Local Dependencies.
+import { ReceiverWallet } from 'src/modules/wallet/entities/receiver-wallet.entity';
+import { Wallet } from 'src/modules/wallet/entities/wallet.entity';
+import { Network } from '../../chain/entities/network.entity';
 import { SendPaymentDto } from '../dto/send-payment.dto';
 
 @Injectable()
 export class PaymentService {
-    constructor(
-        @InjectRepository(Wallet)
-        private readonly walletRepository: Repository<Wallet>,
-        @InjectRepository(ReceiverWallet)
-        private readonly receiverWalletRepository: Repository<ReceiverWallet>,
-    ) { }
+  private readonly _logger: Logger = new Logger('PaymentService', {
+    timestamp: true,
+  });
 
-    // Función asincrónica para enviar tokens ERC-20
-    async sendERC20tokens(
-        //chain: string, 
-        sendPayment: SendPaymentDto,
-        rpcUrl: string
-    )  {
-        try {
-            const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const { sender, token, amount } = sendPayment;
+  constructor(
+    @InjectRepository(Wallet)
+    private readonly walletRepository: Repository<Wallet>,
+    @InjectRepository(ReceiverWallet)
+    private readonly receiverWalletRepository: Repository<ReceiverWallet>,
+    @InjectRepository(Network)
+    private readonly NetworkRepository: Repository<Network>,
+  ) {}
 
-            // Convierte el monto a un valor numérico
-            const numericAmount = parseFloat(amount);
+  /**
+   * @memberof PaymentService
+   * @description Send an ERC20 Token to a Receiver Wallet.
+   * @param chain
+   * @param {SendPaymentDto} sendPayment
+   * @param {string} typeReceiverWallet
+   * @returns {Promise<string>}
+   */
+  async sendERC20tokens(
+    chain: string,
+    sendPayment: SendPaymentDto,
+    typeReceiverWallet: string,
+  ): Promise<string> {
+    try {
+      // Destructure the sendPayment object
+      const { sender, token, amount } = sendPayment;
 
-            // Verifica si el monto es inválido
-            if (isNaN(numericAmount) || numericAmount < 0.0000001 || amount.length > 8) {
-                throw new NotFoundException("El valor de de envio no es válido.");
-            }
+      // Verify that the chain parameter is present.
+      if (!chain) {
+        throw new NotFoundException(
+          "Chain parameter is missing. Please add 'chain' parameter to the request.",
+        );
+      }
 
-            // Traer la llave privada de la wallet sender 
-            const senderWallet = await this.walletRepository.findOne({ address: sender });
-            if (!senderWallet) {
-                throw new NotFoundException('Sender no encontrado en la base de datos');
-            }
+      // Parse the amount to a float.
+      const numericAmount = parseFloat(amount);
 
-            const senderPrivateKey = senderWallet.privateKey;
+      // Get the sender wallet from the database.
+      const senderWallet = await this.walletRepository.findOne({
+        address: sender,
+      });
 
-            // Configures the provider and wallet using ethers.js
-            const wallet = new ethers.Wallet(senderPrivateKey, provider);
+      // Verify that the sender wallet is present.
+      if (!senderWallet) {
+        throw new NotFoundException('Sender Wallet not found in database.');
+      }
 
-            // Crea una instancia del contrato para el token ERC-20
-            const erc20Contract = new ethers.Contract(
-                token,
-                ["function transfer(address to, uint256 amount)"],
-                wallet
-            );
+      // Verify that the amount is a number and is greater than 0. TODO: Improve this validation.
+      if (
+        isNaN(numericAmount) ||
+        numericAmount < 0.0000001 ||
+        amount.length > 8
+      ) {
+        throw new NotFoundException('Invalid amount');
+      }
 
-            // Convierte el monto a unidades decimales
-            const decimalAmount = ethers.parseUnits(amount, 6);
+      // Get the network from the database.
+      const networkObject = await this.NetworkRepository.findOne({
+        rpc_chain_name: chain,
+      });
 
-            const receiverWallet = await this.receiverWalletRepository.findOne();
-            if (!receiverWallet) {
-                throw new NotFoundException('Receiver wallet no encontrada en la base de datos.');
-            }
+      // Verify that the network is present.
+      if (!networkObject) {
+        throw new NotFoundException('Network not found in database.');
+      }
 
-            const receiverAddress = receiverWallet.address;
+      // Get the network rpc_url for the provider and the sender private key.
+      const network = networkObject.rpc_url;
+      const senderPrivateKey = senderWallet.privateKey;
 
-            // Realiza la transferencia de tokens
-            const transaction = await erc20Contract.transfer(receiverAddress, decimalAmount);
-            console.log("Transaction hash:", transaction.hash);
-            await transaction.wait();
-            console.log("Transaction confirmed");
+      // Create a provider and a wallet instance.
+      const provider = new ethers.JsonRpcProvider(network);
+      const wallet = new ethers.Wallet(senderPrivateKey, provider);
 
-            // Retorna un mensaje indicando el monto y el éxito de la transacción
-            return 'monto: ' + decimalAmount + '. Transaccíon realizada con exito'
-        } catch (error) {
-            // Personaliza el manejo de errores según la necesidad
-            console.error('Error sending tokens:', error,);
-            if (error.code === 'INSUFFICIENT_FUNDS') {
-                const errorMessage = "Saldo insuficiente para cubrir el costo de la transacción";
-                        
-                // Puedes lanzar una excepción personalizada si lo prefieres
-                throw new NotFoundException(errorMessage);
-              }
-            throw new NotFoundException(`Error al enviar tokens: ${error.message}`);
-        }
+      // Create a contract instance.
+      const erc20Contract = new ethers.Contract(
+        token,
+        ['function transfer(address to, uint256 amount)'], // TODO: Move this to a constant.
+        wallet,
+      );
+
+      // Parse the amount to a decimal with exactly 6 decimals ( ethereum standard ).
+      const decimalAmount = ethers.parseUnits(amount, 6);
+
+      // Get the receiver wallet with the typeReceiverWallet parameter from the database.
+      const receiverWallet = await this.receiverWalletRepository.findOne({
+        type: typeReceiverWallet,
+      });
+
+      // Verify that the receiver wallet is present.
+      if (!receiverWallet) {
+        throw new NotFoundException('Receiver Wallet not found in database.');
+      }
+
+      // Get the receiver wallet address.
+      const receiverAddress = receiverWallet.address;
+
+      // Send the tokens to the receiver wallet.
+      const transaction = await erc20Contract.transfer(
+        receiverAddress,
+        decimalAmount,
+      );
+
+      // Log the transaction hash.
+      this._logger.log(`Transaction hash: ${transaction.hash}`);
+
+      // Wait for the transaction to be confirmed.
+      await transaction.wait();
+
+      // Log that the transaction was confirmed.
+      this._logger.log(`Transaction confirmed: ${transaction.hash}`);
+
+      // Return a success message.
+      return (
+        'Amount: ' + decimalAmount + '. Transaction confirmed successfully'
+      );
+    } catch (error) {
+      this._logger.error('Error sending tokens: ' + error.message);
+      // TODO: Improve this error handling.
+      if (error.code === 'INSUFFICIENT_FUNDS') {
+        throw new NotFoundException(
+          "Insufficient funds to cover the transaction's cost",
+        );
+      }
+      throw new NotFoundException(`Error sending tokens: ${error.message}`);
     }
+  }
 }
