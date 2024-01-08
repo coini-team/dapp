@@ -25,5 +25,5 @@ export class OrderReceiveDto {
   walletTransactionData: WalletTransactionFromScrapperDto;
 
   @IsOptional()
-  error: { message: string };
+  error?: { message: string };
 }

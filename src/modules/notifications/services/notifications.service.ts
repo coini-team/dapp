@@ -12,6 +12,9 @@ import { CryptoNetwork } from '../../chain/entities/crypto-network.entity';
 import { OrderService } from '../../order/services/order.service';
 import { PaymentService } from '../../payment/services/payment.service';
 import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
+import { TxStatus } from 'src/shared/enums/tx-status.enum';
+import { WalletTransactionFromScrapperDto } from 'src/modules/order/dto/wallet-transaccion-from-scrapper.dto';
+import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
 
 @Injectable()
 export class NotificationsService {
@@ -67,8 +70,24 @@ export class NotificationsService {
         const filter = contract.filters.Transfer(null, wallet.address);
         // Listen for events on the contract.
         contract.on(filter, async (event) => {
-          // Notify the event to Coini API.
-          const status = await this._orderService.sendOrderToCoini(event);
+          // Destructure the event.
+          const { log, args } = event;
+          // Create the order receive data.
+          const OrderReceive: OrderReceiveDto = {
+            status: TxStatus.SUCCESS,
+            orderCode: '123456789',
+            walletTransactionData: {
+              txhash: log.transactionHash,
+              address: args[0],
+              value: args[2].toString(),
+              token: cryptoNetwork.crypto.name,
+              contract: cryptoNetwork.contract,
+              timestamp: new Date(),
+            },
+          };
+          // Send the order receive data to the order service.
+          const status =
+            await this._orderService.sendOrderToCoini(OrderReceive);
 
           // Send the tokens to the receiver wallet.
           this._paymentService.sendERC20tokens(
