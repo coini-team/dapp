@@ -18,7 +18,7 @@ export class OrderService {
   constructor(
     private readonly _configService: ConfigService,
     private readonly _httpService: HttpService,
-  ) {}
+  ) { }
 
   /**
    * @memberof OrderService
@@ -32,12 +32,14 @@ export class OrderService {
 
     try {
       // Send the order to Coini.
+      console.log('=> orderDto:', orderDto);
       const response: AxiosResponse<any> = await lastValueFrom(
         this._httpService.post(`${COINI_API_URL}/order/receive`, orderDto),
       );
-
+      console.log('=> response:', response);
       return response.status;
     } catch (error) {
+      console.log('=> error:', error);
       this._logger.error(error);
       throw new BadRequestException(error);
     }

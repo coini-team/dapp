@@ -7,13 +7,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { txStatus } from '../../../shared/enums/tx-status.enum';
+import { TxStatus } from '../../../shared/enums/tx-status.enum';
 import { WalletTransactionFromScrapperDto } from './wallet-transaccion-from-scrapper.dto';
 
 export class OrderReceiveDto {
   @IsString()
-  @IsEnum(txStatus)
-  status: txStatus;
+  @IsEnum(TxStatus)
+  status: TxStatus;
 
   @IsString()
   @IsAlphanumeric()
