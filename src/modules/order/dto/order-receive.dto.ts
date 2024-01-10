@@ -19,6 +19,9 @@ export class OrderReceiveDto {
   @IsAlphanumeric()
   orderCode: string;
 
+  @IsString()
+  dynamicWallet: string;
+
   @ValidateIf((c) => !c.error)
   @ValidateNested()
   @Type(() => WalletTransactionFromScrapperDto)

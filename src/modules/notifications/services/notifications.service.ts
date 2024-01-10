@@ -13,7 +13,7 @@ import { PaymentService } from '../../payment/services/payment.service';
 import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
 import { TxStatus } from 'src/shared/enums/tx-status.enum';
 import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
-import { getEthParsedAmount } from 'src/shared/utils/decimal.util';
+import { getEthParsedAmount, getDecimalAmount } from 'src/shared/utils/decimal.util';
 
 @Injectable()
 export class NotificationsService {
@@ -75,11 +75,12 @@ export class NotificationsService {
           // Create the order receive data.
           const orderReceive: OrderReceiveDto = {
             status: TxStatus.SUCCESS,
-            orderCode: '',
+            orderCode: 'xxx', // TODO
+            dynamicWallet: wallet.address,
             walletTransactionData: {
               txhash: log.transactionHash,
               address: args[0],
-              value: Number(getEthParsedAmount(args[2])),
+              value: Number(getDecimalAmount(args[2])),
               token: 'USDC', // TODO: Add Inner Join to get the token name.
               contract: cryptoNetwork.contract,
               timestamp: new Date().toISOString(),
@@ -87,10 +88,10 @@ export class NotificationsService {
           };
           console.log('=> orderReceive:', orderReceive);
           
+          // const status = 201;
           // Send the order receive data to the order service.
           const status =
             await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
-          console.log('=> status:', status);
 
           // Send the tokens to the receiver wallet.
           this._paymentService.sendERC20tokens(

@@ -17,3 +17,16 @@ export const getEthParsedAmount = (amount: string): bigint => {
     const decimalAmount = ethers.parseUnits(amountInDecimal, 6);
     return decimalAmount;
 };
+
+export const getDecimalAmount = (amount: string): string => {
+    const numericAmount = parseFloat(amount);
+    if (
+        isNaN(numericAmount) ||
+        numericAmount < 0.0000001 ||
+        amount.length > 8
+    ) {
+        throw new NotFoundException('Invalid amount');
+    }
+    const decimalAmount = (parseInt(amount) / 1e6).toString();
+    return decimalAmount;
+};
