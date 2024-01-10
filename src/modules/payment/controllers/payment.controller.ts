@@ -1,14 +1,9 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Query,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+// Third party Dependencies.
+import { Controller } from '@nestjs/common';
+
+// Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
 import { PaymentService } from '../services/payment.service';
-import { SendPaymentDto } from '../dto/send-payment.dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -16,24 +11,4 @@ export class PaymentController {
     private readonly paymentService: PaymentService,
     private readonly walletService: WalletService,
   ) {}
-
-  /**
-   * @memberof PaymentController
-   * @description Send an ERC721 Token.
-   * @param {Object} sendPayment - Payment Parameters.
-   * @returns {string} - Receiver Address.
-   */
-  //  TODO: This Endpoint will never be used.
-  // @Post('send')
-  // @UsePipes(ValidationPipe)
-  // async sendTokens(
-  //   @Body() sendPayment: SendPaymentDto,
-  //   @Query('chain') chain: string,
-  // ) {
-  //   const rpcUrl = await this.walletService.getRpcUrl(chain);
-  //   return await this.paymentService.sendERC20tokens(
-  //     sendPayment,
-  //     rpcUrl,
-  //   );
-  // }
 }

@@ -1,9 +1,16 @@
 // Third Party Dependencies.
-import { Entity, Column, PrimaryColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from "typeorm";
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 // Local Dependencies.
 import { Network } from './network.entity';
-import { StatusEnum } from "../../../shared/enums/status.enum";
+import { StatusEnum } from '../../../shared/enums/status.enum';
 
 @Entity()
 export class Chain {

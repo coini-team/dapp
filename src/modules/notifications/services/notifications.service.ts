@@ -4,7 +4,6 @@ import { ethers } from 'ethers';
 
 // Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
-import { TokenService } from '../../token/services/token.service';
 import { Network } from '../../chain/entities/network.entity';
 import { ChainService } from '../../chain/services/chain.service';
 import erc20TokenABI from 'src/contracts/abis/ERC20_ABI.json';

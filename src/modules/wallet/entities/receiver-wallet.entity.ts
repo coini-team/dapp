@@ -1,5 +1,11 @@
 // Third Party Dependencies.
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 // Local Dependencies.
 import { walletType } from 'src/shared/enums/wallet-type.enum';

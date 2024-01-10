@@ -6,7 +6,7 @@ import { ethers, HDNodeWallet, JsonRpcProvider, Wallet } from 'ethers';
 import { ConfigService } from '../../../config/config.service';
 import { Blockchain } from '../../../config/config.keys';
 import { Repository } from 'typeorm';
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectRepository } from '@nestjs/typeorm';
 import { Network } from 'src/modules/chain/entities/network.entity';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class WalletService {
     private readonly walletRepository: Repository<Wallet>,
     @InjectRepository(Network)
     private readonly networkRepository: Repository<Network>,
-  ) { }
+  ) {}
 
   public getWallet(rpcUrl: string): Wallet {
     const provider: JsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl);

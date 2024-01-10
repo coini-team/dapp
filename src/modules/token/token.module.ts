@@ -10,12 +10,7 @@ import { TokenService } from './services/token.service';
 import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-  imports: [
-    ConfigModule, 
-    WalletModule,
-    TypeOrmModule.forFeature(
-      [Network],
-  )],
+  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network])],
   controllers: [TokenController],
   providers: [TokenService],
   exports: [TokenService],

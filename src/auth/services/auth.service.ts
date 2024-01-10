@@ -15,9 +15,9 @@ import { SignInDto, SignUpDto } from '../dto';
 import { compare } from 'bcryptjs';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { RoleTypeEnum } from '../../shared/enums/role-type.enum';
-import { Repository } from "typeorm";
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from "../../modules/user/entities/user.entity";
+import { User } from '../../modules/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
