@@ -23,8 +23,8 @@ export class WalletTransactionFromScrapperDto extends OmitType(
   TransactionCoiniCreateDto,
   ['wallet'] as const,
 ) {
-  @IsDateString()
-  timestamp: Date;
+  @IsString()
+  timestamp: string;
 
   @IsString()
   contract: string;

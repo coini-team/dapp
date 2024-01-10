@@ -3,6 +3,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ethers } from 'ethers';
+import { getEthParsedAmount } from 'src/shared/utils/decimal.util';
 
 // Local Dependencies.
 import { ReceiverWallet } from 'src/modules/wallet/entities/receiver-wallet.entity';
@@ -49,9 +50,6 @@ export class PaymentService {
         );
       }
 
-      // Parse the amount to a float.
-      const numericAmount = parseFloat(amount);
-
       // Get the sender wallet from the database.
       const senderWallet = await this.walletRepository.findOne({
         address: sender,
@@ -60,15 +58,6 @@ export class PaymentService {
       // Verify that the sender wallet is present.
       if (!senderWallet) {
         throw new NotFoundException('Sender Wallet not found in database.');
-      }
-
-      // Verify that the amount is a number and is greater than 0. TODO: Improve this validation.
-      if (
-        isNaN(numericAmount) ||
-        numericAmount < 0.0000001 ||
-        amount.length > 8
-      ) {
-        throw new NotFoundException('Invalid amount');
       }
 
       // Get the network from the database.
@@ -96,9 +85,6 @@ export class PaymentService {
         wallet,
       );
 
-      // Parse the amount to a decimal with exactly 6 decimals ( ethereum standard ).
-      const decimalAmount = ethers.parseUnits(amount, 6);
-
       // Get the receiver wallet with the typeReceiverWallet parameter from the database.
       const receiverWallet = await this.receiverWalletRepository.findOne({
         type: typeReceiverWallet,
@@ -111,6 +97,8 @@ export class PaymentService {
 
       // Get the receiver wallet address.
       const receiverAddress = receiverWallet.address;
+
+      const decimalAmount = getEthParsedAmount(amount);
 
       // Send the tokens to the receiver wallet.
       const transaction = await erc20Contract.transfer(

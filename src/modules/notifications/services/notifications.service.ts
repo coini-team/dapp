@@ -4,7 +4,6 @@ import { ethers } from 'ethers';
 
 // Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
-import { TokenService } from '../../token/services/token.service';
 import { Network } from '../../chain/entities/network.entity';
 import { ChainService } from '../../chain/services/chain.service';
 import erc20TokenABI from 'src/contracts/abis/ERC20_ABI.json';
@@ -13,8 +12,8 @@ import { OrderService } from '../../order/services/order.service';
 import { PaymentService } from '../../payment/services/payment.service';
 import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
 import { TxStatus } from 'src/shared/enums/tx-status.enum';
-import { WalletTransactionFromScrapperDto } from 'src/modules/order/dto/wallet-transaccion-from-scrapper.dto';
 import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
+import { getEthParsedAmount } from 'src/shared/utils/decimal.util';
 
 @Injectable()
 export class NotificationsService {
@@ -26,7 +25,7 @@ export class NotificationsService {
     private readonly chainService: ChainService,
     private readonly _paymentService: PaymentService,
     private readonly _orderService: OrderService,
-  ) {}
+  ) { }
 
   /**
    * @memberof NotificationsService
@@ -72,22 +71,26 @@ export class NotificationsService {
         contract.on(filter, async (event) => {
           // Destructure the event.
           const { log, args } = event;
+          // TODO: Refactor this code.
           // Create the order receive data.
-          const OrderReceive: OrderReceiveDto = {
+          const orderReceive: OrderReceiveDto = {
             status: TxStatus.SUCCESS,
-            orderCode: '123456789',
+            orderCode: '',
             walletTransactionData: {
               txhash: log.transactionHash,
               address: args[0],
-              value: args[2].toString(),
-              token: cryptoNetwork.crypto.name,
+              value: Number(getEthParsedAmount(args[2])),
+              token: 'USDC', // TODO: Add Inner Join to get the token name.
               contract: cryptoNetwork.contract,
-              timestamp: new Date(),
+              timestamp: new Date().toISOString(),
             },
           };
+          console.log('=> orderReceive:', orderReceive);
+          
           // Send the order receive data to the order service.
           const status =
-            await this._orderService.sendOrderToCoini(OrderReceive);
+            await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
+          console.log('=> status:', status);
 
           // Send the tokens to the receiver wallet.
           this._paymentService.sendERC20tokens(
@@ -97,8 +100,8 @@ export class NotificationsService {
               token: cryptoNetwork.contract,
               amount: event.args[2].toString(),
             },
-            // If the status is 200, the receiver wallet is recognized. Otherwise, it is unrecognized.
-            status === 200
+            // If the status is 201, the receiver wallet is recognized. Otherwise, it is unrecognized.
+            status === 201
               ? ReceiverWalletType.RECOGNIZED_TX
               : ReceiverWalletType.UNRECOGNIZED_TX,
           );

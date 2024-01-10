@@ -1,6 +1,6 @@
 // Third Party Dependencies.
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { lastValueFrom } from 'rxjs';
 
@@ -32,16 +32,19 @@ export class OrderService {
 
     try {
       // Send the order to Coini.
-      console.log('=> orderDto:', orderDto);
       const response: AxiosResponse<any> = await lastValueFrom(
-        this._httpService.post(`${COINI_API_URL}/order/receive`, orderDto),
+        this._httpService.post(`${COINI_API_URL}/order/receive`, orderDto, {
+          headers: {
+            Authorization: 'Xyoh2JOiXRupVfcJNdZJIrvUt0KwlxOEbjZEskLlf9M=', // TODO: Remove this.
+          },
+        }),
       );
-      console.log('=> response:', response);
+      console.log('=> orderDto:', orderDto);
       return response.status;
     } catch (error) {
       console.log('=> error:', error);
       this._logger.error(error);
-      throw new BadRequestException(error);
+      return error.response.status;
     }
   }
 }
