@@ -22,7 +22,8 @@
     "migrations:generate": "npm run typeorm -- migration:generate -n",
     "migrations:create": "npm run typeorm -- migration:create -n",
     "migrations:revert": "npm run typeorm -- migration:revert",
-    "migrations:run": "npm run typeorm -- migration:run"
+    "migrations:run": "npm run typeorm -- migration:run",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -55,6 +56,8 @@
     "typeorm-seeding": "^1.6.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
@@ -78,7 +81,8 @@
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.1.3"
+    "typescript": "^5.1.3",
+    "husky": "^8.0.0"
   },
   "jest": {
     "moduleFileExtensions": [
