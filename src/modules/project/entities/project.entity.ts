@@ -4,25 +4,44 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinColumn,
+  ManyToOne,
+  JoinTable,
 } from 'typeorm';
 import { StatusEnum } from '../../../shared/enums/status.enum';
+import { User } from 'src/modules/user/entities/user.entity';
+import { ModeEnum } from 'src/shared/enums/mode.enum';
+import { Chain } from 'src/modules/chain/entities/chain.entity';
 
 @Entity()
 export class Project {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
+  id: string;
 
   @Column()
-  organization_id: number;
+  organization_id: number; // TODO: Add Relation with Organization.
 
   @Column({ length: 500 })
   name: string;
 
   @Column()
-  mode: string;
+  description: string;
 
-  @Column()
-  api_key: string;
+  @Column({ name: 'access_token' })
+  accessToken: string;
+
+  @Column({
+    name: 'refresh_token',
+  })
+  refreshToken: string;
+
+  @Column({
+    type: 'enum',
+    enum: ModeEnum,
+    default: ModeEnum.DEVELOPMENT,
+  })
+  mode: string;
 
   @Column({
     type: 'enum',
@@ -30,6 +49,24 @@ export class Project {
     default: StatusEnum.ACTIVE,
   })
   status: string;
+
+  @ManyToMany(() => User, (user) => user.projects)
+  @JoinTable({
+    name: 'access', // El mismo nombre de la tabla que definiste en User
+    inverseJoinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    joinColumn: {
+      name: 'project_id',
+      referencedColumnName: 'id',
+    },
+  })
+  users: User[];
+
+  @ManyToOne(() => Chain, (chain) => chain.networks)
+  @JoinColumn({ name: 'chain_id' })
+  chain: Chain;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;

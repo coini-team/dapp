@@ -12,11 +12,12 @@ import {
 // Local Dependencies.
 import { Role } from '../../role/entities/role.entity';
 import { StatusEnum } from '../../../shared/enums/status.enum';
+import { Project } from 'src/modules/project/entities/project.entity';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn({ name: 'id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
+  id: string;
 
   @Column({ name: 'name', nullable: false, length: 45, type: 'varchar' })
   name: string;
@@ -37,6 +38,20 @@ export class User {
     inverseJoinColumn: { name: 'role_id' },
   })
   roles: Role[];
+
+  @ManyToMany(() => Project, (project) => project.users)
+  @JoinTable({
+    name: 'access',
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'project_id',
+      referencedColumnName: 'id',
+    },
+  })
+  projects: Project[];
 
   @Column({
     type: 'enum',
