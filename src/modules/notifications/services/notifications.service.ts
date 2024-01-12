@@ -1,46 +1,31 @@
 // Third Party Dependencies.
-import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { ethers } from 'ethers';
 
 // Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
-import { TokenService } from '../../token/services/token.service';
-import { ConfigService } from '../../../config/config.service';
 import { Network } from '../../chain/entities/network.entity';
 import { ChainService } from '../../chain/services/chain.service';
 import erc20TokenABI from 'src/contracts/abis/ERC20_ABI.json';
 import { CryptoNetwork } from '../../chain/entities/crypto-network.entity';
+import { OrderService } from '../../order/services/order.service';
+import { PaymentService } from '../../payment/services/payment.service';
+import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
+import { TxStatus } from 'src/shared/enums/tx-status.enum';
+import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
+import { getEthParsedAmount, getDecimalAmount } from 'src/shared/utils/decimal.util';
 
 @Injectable()
 export class NotificationsService {
+  private readonly _logger: Logger = new Logger('NotificationsService', {
+    timestamp: true,
+  });
   constructor(
     private readonly walletService: WalletService,
     private readonly chainService: ChainService,
-  ) {}
-
-  /**
-   * @memberof NotificationsService
-   * @description Listen for contract events.
-   * @returns {Promise<void>}
-   */
-  async listenForEvent() {
-    // console.log(':::Listening for contract events:::');
-    // const contractERC721 = await this.nftService.getERC721Contract(
-    //   this.walletService.getWallet(),
-    // );
-    // contractERC721.on('NewContract', (contractAddress) => {
-    //   console.log('Event received:', contractAddress);
-    // });
-    // const contractERC20 = this.tokenService.getFactoryERC20Contract(
-    //   this.walletService.getWallet(),
-    // );
-    // contractERC20.on('NewERC20TokenContract', (erc20TokenAddress, index) => {
-    //   console.log('Event received:', erc20TokenAddress);
-    //   console.log('Array index:', index);
-    // });
-  }
+    private readonly _paymentService: PaymentService,
+    private readonly _orderService: OrderService,
+  ) { }
 
   /**
    * @memberof NotificationsService
@@ -63,7 +48,6 @@ export class NotificationsService {
         };
       }),
     );
-
     // Get All Crypto Networks from Database.
     const cryptoNetworks: CryptoNetwork[] =
       await this.chainService.getCryptoNetworks();
@@ -85,7 +69,43 @@ export class NotificationsService {
         const filter = contract.filters.Transfer(null, wallet.address);
         // Listen for events on the contract.
         contract.on(filter, async (event) => {
-          console.log('event: ', event);
+          // Destructure the event.
+          const { log, args } = event;
+          // TODO: Refactor this code.
+          // Create the order receive data.
+          const orderReceive: OrderReceiveDto = {
+            status: TxStatus.SUCCESS,
+            orderCode: 'xxx', // TODO
+            dynamicWallet: wallet.address,
+            walletTransactionData: {
+              txhash: log.transactionHash,
+              address: args[0],
+              value: Number(getDecimalAmount(args[2])),
+              token: 'USDC', // TODO: Add Inner Join to get the token name.
+              contract: cryptoNetwork.contract,
+              timestamp: new Date().toISOString(),
+            },
+          };
+          console.log('=> orderReceive:', orderReceive);
+          
+          // const status = 201;
+          // Send the order receive data to the order service.
+          const status =
+            await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
+
+          // Send the tokens to the receiver wallet.
+          this._paymentService.sendERC20tokens(
+            cryptoNetwork.network.rpc_chain_name,
+            {
+              sender: wallet.address,
+              token: cryptoNetwork.contract,
+              amount: event.args[2].toString(),
+            },
+            // If the status is 201, the receiver wallet is recognized. Otherwise, it is unrecognized.
+            status === 201
+              ? ReceiverWalletType.RECOGNIZED_TX
+              : ReceiverWalletType.UNRECOGNIZED_TX,
+          );
         });
       });
     });

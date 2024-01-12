@@ -29,7 +29,7 @@ export class ChainService {
    */
   public async getCryptoNetworks(): Promise<CryptoNetwork[]> {
     return await this.cryptoNetworkRepository.find({
-      relations: ['network'],
+      relations: ['network', 'crypto'],
     });
   }
 }

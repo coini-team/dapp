@@ -54,3 +54,7 @@ export enum Blockchain {
 export enum Security {
   SECURE_ENCRYPTION_KEY = 'SECURE_ENCRYPTION_KEY',
 }
+
+export enum Coini {
+  COINI_API_URL = 'COINI_API_URL',
+}
