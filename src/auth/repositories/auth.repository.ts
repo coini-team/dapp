@@ -20,7 +20,7 @@ export class AuthRepository extends Repository<User> {
 
   async signUp(user: SignUpDto) {
     // Get user data from DTO.
-    const { name, email, password }: SignUpDto = user;
+    const { name, lastName, email, password }: SignUpDto = user;
     // Get default role from database.
     const defaultRole = await this._roleRepository.findOne({
       where: { name: this._roleType.MEMBER },
@@ -30,11 +30,11 @@ export class AuthRepository extends Repository<User> {
     // Create new user instance.
     const newUser = this._userRepository.create({
       name,
+      lastName,
       email,
       password: await hash(password, salt),
       roles: [defaultRole],
     });
-    console.log('Por aqui andamos');
 
     // Save user.
     await this._userRepository.save(newUser);

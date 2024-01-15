@@ -10,9 +10,7 @@ import { DeployNftDto } from '../dto/deploy-nft.dto';
 
 @Injectable()
 export class NftService {
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   /**
    * @todo Refactor this.
@@ -22,7 +20,7 @@ export class NftService {
   async deployERC721Token(
     wallet: Wallet,
     tokenParams: DeployNftDto,
-    rpcUrl:string
+    rpcUrl: string,
   ): Promise<any> {
     const { name, symbol } = tokenParams;
     const methodName = 'createNewContract(string,string)'; // TODO: Change this to the correct method name from the ABI.
@@ -43,8 +41,9 @@ export class NftService {
     } catch (error) {
       console.error(error);
       if (error.code === 'INSUFFICIENT_FUNDS') {
-        const errorMessage = "Saldo insuficiente para cubrir el costo de la transacción";
-                
+        const errorMessage =
+          'Saldo insuficiente para cubrir el costo de la transacción';
+
         // Puedes lanzar una excepción personalizada si lo prefieres
         throw new NotFoundException(errorMessage);
       }

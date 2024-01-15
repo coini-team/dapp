@@ -18,7 +18,7 @@ export class OrderService {
   constructor(
     private readonly _configService: ConfigService,
     private readonly _httpService: HttpService,
-  ) { }
+  ) {}
 
   /**
    * @memberof OrderService

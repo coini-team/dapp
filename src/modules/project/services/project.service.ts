@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
   Headers,
-  UnauthorizedException,
   Logger,
   ConflictException,
   ForbiddenException,

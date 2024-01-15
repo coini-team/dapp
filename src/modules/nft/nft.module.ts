@@ -10,12 +10,7 @@ import { NftService } from './services/nft.service';
 import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-  imports: [
-    ConfigModule, 
-    WalletModule, 
-    TypeOrmModule.forFeature(
-      [Network],
-    )],
+  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network])],
   providers: [NftService],
   controllers: [NftController],
   exports: [NftService],
