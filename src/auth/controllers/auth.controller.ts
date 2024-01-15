@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 
 // Local Dependencies.
-import { GetUser } from '../../modules/user/decorators/user.decorator';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { AuthService } from '../services/auth.service';
 import { SignInDto, SignUpDto } from '../dto';

@@ -1,5 +1,5 @@
 import { OmitType } from '@nestjs/mapped-types';
-import { IsDateString, IsNumber, IsPositive, IsString } from 'class-validator';
+import { IsNumber, IsPositive, IsString } from 'class-validator';
 import { Wallet } from '../../wallet/entities/wallet.entity';
 
 export class TransactionCoiniCreateDto {

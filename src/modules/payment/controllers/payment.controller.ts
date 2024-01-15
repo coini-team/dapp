@@ -1,14 +1,6 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Query,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { WalletService } from '../../wallet/services/wallet.service';
 import { PaymentService } from '../services/payment.service';
-import { SendPaymentDto } from '../dto/send-payment.dto';
 
 @Controller('payment')
 export class PaymentController {

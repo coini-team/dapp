@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Query } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { WalletService } from '../services/wallet.service';
 
 @Controller('wallet')
@@ -19,5 +19,4 @@ export class WalletController {
       throw error;
     }
   }
-
 }

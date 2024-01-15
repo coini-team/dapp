@@ -13,7 +13,7 @@ import { PaymentService } from '../../payment/services/payment.service';
 import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
 import { TxStatus } from 'src/shared/enums/tx-status.enum';
 import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
-import { getEthParsedAmount, getDecimalAmount } from 'src/shared/utils/decimal.util';
+import { getDecimalAmount } from 'src/shared/utils/decimal.util';
 
 @Injectable()
 export class NotificationsService {
@@ -25,7 +25,7 @@ export class NotificationsService {
     private readonly chainService: ChainService,
     private readonly _paymentService: PaymentService,
     private readonly _orderService: OrderService,
-  ) { }
+  ) {}
 
   /**
    * @memberof NotificationsService
@@ -87,7 +87,7 @@ export class NotificationsService {
             },
           };
           console.log('=> orderReceive:', orderReceive);
-          
+
           // const status = 201;
           // Send the order receive data to the order service.
           const status =
