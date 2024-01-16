@@ -25,7 +25,7 @@ export class NotificationsService {
     private readonly chainService: ChainService,
     private readonly _paymentService: PaymentService,
     private readonly _orderService: OrderService,
-  ) {}
+  ) { }
 
   /**
    * @memberof NotificationsService
@@ -33,9 +33,8 @@ export class NotificationsService {
    * @returns {Promise<void>}
    */
   async processTransferEvents() {
-    // Get All Networks from Database.
-    const networks: Network[] = await this.chainService.getAllNetworks();
     // Map Networks and Create Providers.
+    const networks: Network[] = await this.chainService.getAllNetworks();
     const providers = await Promise.all(
       networks.map(async (network) => {
         return {
@@ -48,16 +47,11 @@ export class NotificationsService {
         };
       }),
     );
-    // Get All Crypto Networks from Database.
-    const cryptoNetworks: CryptoNetwork[] =
-      await this.chainService.getCryptoNetworks();
-    // Get All Wallets from Database.
+    // Map Crypto Networks and Create Contracts to listen transfer events
+    const tokens: CryptoNetwork[] = await this.chainService.getCryptoNetworks();
     const wallets = await this.walletService.getAllWallets();
-    // Map Crypto Networks and Create Contracts.
-    cryptoNetworks.forEach((cryptoNetwork) => {
-      // For each wallet, listen for Transfer events.
+    tokens.forEach((cryptoNetwork) => {
       wallets.forEach((wallet) => {
-        // Create Contract.
         const contract = new ethers.Contract(
           cryptoNetwork.contract,
           erc20TokenABI,
@@ -65,33 +59,12 @@ export class NotificationsService {
             (provider) => provider.id === cryptoNetwork.network.id,
           ),
         );
-        // Filter to only get Transfer events from the wallet.
+        // Filter only get Transfer events from the wallet.
         const filter = contract.filters.Transfer(null, wallet.address);
-        // Listen for events on the contract.
         contract.on(filter, async (event) => {
-          // Destructure the event.
           const { log, args } = event;
-          // TODO: Refactor this code.
-          // Create the order receive data.
-          const orderReceive: OrderReceiveDto = {
-            status: TxStatus.SUCCESS,
-            orderCode: 'xxx', // TODO
-            dynamicWallet: wallet.address,
-            walletTransactionData: {
-              txhash: log.transactionHash,
-              address: args[0],
-              value: Number(getDecimalAmount(args[2])),
-              token: 'USDC', // TODO: Add Inner Join to get the token name.
-              contract: cryptoNetwork.contract,
-              timestamp: new Date().toISOString(),
-            },
-          };
-          console.log('=> orderReceive:', orderReceive);
-
-          // const status = 201;
-          // Send the order receive data to the order service.
-          const status =
-            await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
+          const status = 201;
+          // TODO: call hit webhook
 
           // Send the tokens to the receiver wallet.
           this._paymentService.sendERC20tokens(
@@ -109,5 +82,30 @@ export class NotificationsService {
         });
       });
     });
+  }
+
+  async hitCoiniWebhook() {
+    // // TODO: Refactor this code.
+    // // Create the order receive data.
+    // const orderReceive: OrderReceiveDto = {
+    //   status: TxStatus.SUCCESS,
+    //   orderCode: 'xxx', // TODO
+    //   dynamicWallet: wallet.address,
+    //   walletTransactionData: {
+    //     txhash: log.transactionHash,
+    //     address: args[0],
+    //     value: Number(getDecimalAmount(args[2])),
+    //     token: 'USDC', // TODO: Add Inner Join to get the token name.
+    //     contract: cryptoNetwork.contract,
+    //     timestamp: new Date().toISOString(),
+    //   },
+    // };
+    // console.log('=> orderReceive:', orderReceive);
+
+    // // const status = 201;
+    // // Send the order receive data to the order service.
+    // const status =
+    //   await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
+
   }
 }
