@@ -2,7 +2,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -14,7 +13,7 @@ import {
 // Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
 import { TokenService } from '../services/token.service';
-import { DeployTokenDto } from '../dto/deploy-token.dto'; 
+import { DeployTokenDto } from '../dto/deploy-token.dto';
 
 @Controller('token')
 export class TokenController {
@@ -33,7 +32,7 @@ export class TokenController {
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
   async deployERC20Token(
-    @Body()tokenParams: DeployTokenDto,
+    @Body() tokenParams: DeployTokenDto,
     @Query('chain') chain: string,
   ): Promise<any> {
     try {

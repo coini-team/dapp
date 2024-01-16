@@ -2,6 +2,7 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -15,9 +16,9 @@ import { SignInDto, SignUpDto } from '../dto';
 import { compare } from 'bcryptjs';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { RoleTypeEnum } from '../../shared/enums/role-type.enum';
-import { Repository } from "typeorm";
+import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from "../../modules/user/entities/user.entity";
+import { User } from '../../modules/user/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -164,5 +165,45 @@ export class AuthService {
       id,
       name,
     });
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to verify token.
+   * @param {string} token
+   * @returns {Promise<JwtPayload>}
+   */
+  public verifyToken(token: string): JwtPayload {
+    // Verify token and return payload.
+    return this._jwtService.verify(token, {
+      secret: this.configService.get(JwtEnv.JWT_REFRESH_SECRET),
+    });
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to get the user from the authorization token.
+   * @param {string} authHeader
+   * @returns {Promise<User>}
+   * @throws {UnauthorizedException}
+   * @throws {NotFoundException}
+   */
+  async getUserFromAuthToken(authHeader: string): Promise<User> {
+    // Check if Authorization header is provided.
+    if (!authHeader)
+      throw new UnauthorizedException('Authorization header is missing.');
+    // Verify if Authorization header is valid.
+    const token = authHeader.split(' ')[1];
+    // Check if token is provided.
+    if (!token) throw new UnauthorizedException('Invalid token.');
+    // Verify if token is valid.
+    const decodedToken = this.verifyToken(token);
+    // Search for User.
+    const user = await this._userRepository.findOne({
+      where: { id: decodedToken.id },
+    });
+    // Check if User exists.
+    if (!user) throw new NotFoundException('User not found.');
+    return user;
   }
 }
