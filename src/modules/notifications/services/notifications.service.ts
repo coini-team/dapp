@@ -13,7 +13,10 @@ import { PaymentService } from '../../payment/services/payment.service';
 import { ReceiverWalletType } from '../../../shared/enums/receiver-wallet-type.enum';
 import { TxStatus } from 'src/shared/enums/tx-status.enum';
 import { OrderReceiveDto } from 'src/modules/order/dto/order-receive.dto';
-import { getDecimalAmount } from 'src/shared/utils/decimal.util';
+import {
+  getEthDecimalAmount,
+  getEthBigAmount,
+} from 'src/shared/utils/decimal.util';
 
 @Injectable()
 export class NotificationsService {
@@ -50,29 +53,38 @@ export class NotificationsService {
     // Map Crypto Networks and Create Contracts to listen transfer events
     const tokens: CryptoNetwork[] = await this.chainService.getCryptoNetworks();
     const wallets = await this.walletService.getAllWallets();
-    tokens.forEach((cryptoNetwork) => {
+    tokens.forEach((token) => {
       wallets.forEach((wallet) => {
         const contract = new ethers.Contract(
-          cryptoNetwork.contract,
+          token.contract,
           erc20TokenABI,
-          providers.find(
-            (provider) => provider.id === cryptoNetwork.network.id,
-          ),
+          providers.find((provider) => provider.id === token.network.id),
         );
+
         // Filter only get Transfer events from the wallet.
         const filter = contract.filters.Transfer(null, wallet.address);
         contract.on(filter, async (event) => {
           const { log, args } = event;
           const status = 201;
-          // TODO: call hit webhook
+
+          // hit coini webhook sending order payload
+          const status_ = await this.hitCoiniWebhook(
+            wallet.address,
+            log.transactionHash,
+            args[0],
+            getEthDecimalAmount(args[2].toString(), token.decimals),
+            token.crypto.name,
+            token.contract,
+          );
+          console.log('=> status_:', status_);
 
           // Send the tokens to the receiver wallet.
           this._paymentService.sendERC20tokens(
-            cryptoNetwork.network.rpc_chain_name,
+            token.network.rpc_chain_name,
             {
               sender: wallet.address,
-              token: cryptoNetwork.contract,
-              amount: event.args[2].toString(),
+              token: token.contract,
+              amount: getEthBigAmount(args[2].toString(), token.decimals),
             },
             // If the status is 201, the receiver wallet is recognized. Otherwise, it is unrecognized.
             status === 201
@@ -84,28 +96,24 @@ export class NotificationsService {
     });
   }
 
-  async hitCoiniWebhook() {
-    // // TODO: Refactor this code.
-    // // Create the order receive data.
-    // const orderReceive: OrderReceiveDto = {
-    //   status: TxStatus.SUCCESS,
-    //   orderCode: 'xxx', // TODO
-    //   dynamicWallet: wallet.address,
-    //   walletTransactionData: {
-    //     txhash: log.transactionHash,
-    //     address: args[0],
-    //     value: Number(getDecimalAmount(args[2])),
-    //     token: 'USDC', // TODO: Add Inner Join to get the token name.
-    //     contract: cryptoNetwork.contract,
-    //     timestamp: new Date().toISOString(),
-    //   },
-    // };
-    // console.log('=> orderReceive:', orderReceive);
+  async hitCoiniWebhook(dynamicWallet, txhash, address, value, token, contract) {
+    // Create the order payload
+    const orderReceive: OrderReceiveDto = {
+      status: TxStatus.SUCCESS,
+      orderCode: 'xxx', // TODO
+      dynamicWallet,
+      walletTransactionData: {
+        txhash,
+        address,
+        value,
+        token, // TODO: Add Inner Join to get the token name.
+        contract,
+        timestamp: new Date().toISOString(),
+      },
+    };
+    console.log('=> orderReceive:', orderReceive);
 
-    // // const status = 201;
-    // // Send the order receive data to the order service.
-    // const status =
-    //   await this._orderService.sendOrderToCoini(orderReceive); // TODO: Uncomment this line.
-
+    // Send the order receive data to the order service.
+    return await this._orderService.sendOrderToCoini(orderReceive);
   }
 }

@@ -21,6 +21,9 @@ export class CryptoNetwork {
   @Column({ length: 50 })
   contract: string;
 
+  @Column({ nullable: false })
+  decimals: number;
+
   @Column({
     type: 'enum',
     enum: StatusEnum,

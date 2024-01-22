@@ -3,7 +3,6 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ethers } from 'ethers';
-import { getEthParsedAmount } from 'src/shared/utils/decimal.util';
 
 // Local Dependencies.
 import { ReceiverWallet } from 'src/modules/wallet/entities/receiver-wallet.entity';
@@ -98,13 +97,12 @@ export class PaymentService {
       // Get the receiver wallet address.
       const receiverAddress = receiverWallet.address;
 
-      const decimalAmount = getEthParsedAmount(amount);
+      // const decimalAmount = getEthParsedAmount('4000n', 6);
+      // console.log('=> decimalAmount:', `${decimalAmount} - ${typeof decimalAmount}`);
+      console.log('=> amount to send:', amount);
 
       // Send the tokens to the receiver wallet.
-      const transaction = await erc20Contract.transfer(
-        receiverAddress,
-        decimalAmount,
-      );
+      const transaction = await erc20Contract.transfer(receiverAddress, amount);
 
       // Log the transaction hash.
       this._logger.log(`Transaction hash: ${transaction.hash}`);
@@ -116,9 +114,7 @@ export class PaymentService {
       this._logger.log(`Transaction confirmed: ${transaction.hash}`);
 
       // Return a success message.
-      return (
-        'Amount: ' + decimalAmount + '. Transaction confirmed successfully'
-      );
+      return 'Amount: ' + amount + '. Transaction confirmed successfully';
     } catch (error) {
       this._logger.error('Error sending tokens: ' + error.message);
       // TODO: Improve this error handling.
