@@ -31,6 +31,9 @@ export class User {
   @Column({ name: 'password', nullable: false, length: 255, type: 'varchar' })
   password: string;
 
+  @Column({ name: 'wallet', nullable: false, length: 45, type: 'varchar' })
+  wallet: string;
+
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
   @JoinTable({
     name: 'user_roles',
