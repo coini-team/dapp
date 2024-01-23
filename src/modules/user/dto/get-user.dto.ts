@@ -19,5 +19,6 @@ export class GetUserDto {
   email: string;
 
   @IsString()
+  @IsNotEmpty()
   wallet:string
 }
