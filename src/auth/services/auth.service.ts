@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -48,21 +49,35 @@ export class AuthService {
     return this._authRepository.signUp(user);
   }
 
-  async signIn(user: SignInDto): Promise<{
+  async signIn(user: Partial<SignInDto>): Promise<{
     tokens: { accessToken: string; refreshToken: string };
     user: JwtPayload;
   }> {
-    const { email, password } = user;
+    const { email, password, wallet } = user;
 
-    const userExist = await this._userRepository.findOne({
-      where: { email },
-    });
+    let userExist;
 
+    if (email && wallet || password && wallet || email && password && wallet){
+      throw new BadRequestException('Choice one authentication method. With wallet or with mail')
+    } else if (email && password) {
+      // Autenticación por correo electrónico y contraseña
+      userExist = await this._userRepository.findOne({
+        where: { email },
+      });
+    } else if(wallet) {
+      // Autenticación por billetera
+      userExist = await this._userRepository.findOne({
+        where: { wallet },
+      });
+    }
+  
     if (!userExist) throw new ConflictException('User does not exist');
-
-    const isMatch = await compare(password, userExist.password);
-
-    if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+  
+    // Validar la contraseña si se proporciona
+    if (password) {
+      const isMatch = await compare(password, userExist.password);
+      if (!isMatch) throw new UnauthorizedException('Invalid credentials');
+    }
 
     const payload: JwtPayload = {
       id: userExist.id,

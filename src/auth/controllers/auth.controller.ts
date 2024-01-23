@@ -39,7 +39,7 @@ export class AuthController {
    */
   @Post('signin')
   @UsePipes(ValidationPipe)
-  async signIn(@Body() signInDto: SignInDto): Promise<{
+  async signIn(@Body() signInDto: Partial<SignInDto>): Promise<{
     tokens: { accessToken: string; refreshToken: string };
     user: JwtPayload;
   }> {
