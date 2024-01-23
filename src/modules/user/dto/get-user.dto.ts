@@ -12,5 +12,9 @@ export class GetUserDto {
 
   @IsNotEmpty()
   @IsString()
+  lastName: string;
+
+  @IsNotEmpty()
+  @IsString()
   email: string;
 }

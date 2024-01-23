@@ -1,21 +1,24 @@
 // Third Party Dependencies.
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { genSalt, hash, compare } from 'bcryptjs';
 import {
   BadRequestException,
-  Injectable,
-  Logger,
   NotFoundException,
+  Injectable,
+  Headers,
+  Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 // Local Dependencies.
 import { StatusEnum } from '../../../shared/enums/status.enum';
 import { GenericMapper } from '../../../shared/helpers';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
 import { User } from '../entities/user.entity';
 import { GetUserDto } from '../dto';
+import { passwordDto } from '../dto/password.dto';
 import { Role } from '../../role/entities/role.entity';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Injectable()
 export class UserService {
@@ -30,59 +33,62 @@ export class UserService {
     private readonly _userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly _roleRepository: Repository<Role>,
-  ) {}
+    private readonly _authService: AuthService,
+  ) { }
 
-  async get(id: number): Promise<GetUserDto> {
-    // Validate if the id is empty.
-    !id && new BadRequestException('id must be sent');
-    // Find the user with the id and status active.
-    const user: User = await this._userRepository.findOne(id, {
-      where: { status: this._statusEnum.ACTIVE },
-    });
-    // Validate if the user exists.
-    !user && new NotFoundException();
-    // Map the user to the GetUserDto and return it.
-    return this.mapper.map<User, GetUserDto>(user, GetUserDto);
-  }
-  x;
-  async create(user: CreateUserDto): Promise<GetUserDto> {
-    // Map the user to the User entity.
-    const userEntity: User = this.mapper.map<CreateUserDto, User>(user, User);
-    // Save the user and return it.
-    const userCreated: User = await this._userRepository.save(userEntity);
-    // Map the user to the GetUserDto and return it.
-    return this.mapper.map<User, GetUserDto>(userCreated, GetUserDto);
+  async get(
+    @Headers('authorization') authHeader: string,
+  ): Promise<GetUserDto> {
+    try {
+      // Validate if the id is empty.
+      await this._authService.getUserFromAuthToken(authHeader);
+
+      // Find the user with the id and status active.
+      const user = await this._userRepository.findOne({
+        where: { status: this._statusEnum.ACTIVE },
+      });
+
+      return this.mapper.map<User, GetUserDto>(user, GetUserDto);
+    } catch (error) {
+      // Handle errors appropriately, log them, and rethrow if necessary.
+      this._logger.error(error);
+      throw new BadRequestException(error.message || 'Bad request');
+    }
   }
 
-  async update(id: number, user: UpdateUserDto): Promise<User> {
-    // Validate if the id is empty.
-    !id && new BadRequestException('id must be sent');
-    // Validate if the user exists.
-    const userExists: User = await this._userRepository.findOne(id, {
-      where: { status: this._statusEnum.ACTIVE },
-    });
-    // Validate if the user exists.
+  async update(
+    updates: Partial<User>,
+    @Headers('authorization') authHeader: string
+  ): Promise<User> {
+    await this._authService.getUserFromAuthToken(authHeader);
+    const userExists: User = await this._userRepository.findOne({ where: { status: this._statusEnum.ACTIVE } });
     !userExists && new NotFoundException();
-    // Update the user and return it.
-    return await this._userRepository.save({
-      ...userExists,
-      ...user,
-    });
+  
+    // Actualizar solo los campos proporcionados en el objeto 'updates'
+    Object.assign(userExists, updates);
+  
+    return await this._userRepository.save(userExists);
   }
 
-  async delete(id: number): Promise<void> {
-    // Validate if the id is empty.
-    !id && new BadRequestException('id must be sent');
+  async delete(
+    @Headers('authorization') authHeader: string
+  ): Promise<User> {
+    await this._authService.getUserFromAuthToken(authHeader);
     // Validate if the user exists.
-    const userExists: User = await this._userRepository.findOne(id, {
+    const userExists: User = await this._userRepository.findOne({
       where: { status: this._statusEnum.ACTIVE },
     });
-    // Validate if the user exists.
-    !userExists && new NotFoundException();
-    // Delete the user.
-    await this._userRepository.update(id, {
-      status: this._statusEnum.INACTIVE,
-    });
+
+    // Verificar si el usuario existe
+    if (!userExists) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Actualizar el campo 'status' a 'inactive'
+    userExists.status = this._statusEnum.INACTIVE;
+
+    // Guardar los cambios en la base de datos
+    return await this._userRepository.save(userExists);
   }
 
   async setRoleToUser(userId: number, roleId: number): Promise<boolean> {
@@ -107,4 +113,44 @@ export class UserService {
     // Return true.
     return true;
   }
-}
+
+  async updatePassword(
+    passwordDto: passwordDto,
+    @Headers('authorization') authHeader: string
+  ): Promise<User> {
+    // Obtain user from authentication token
+  const user: User = await this._authService.getUserFromAuthToken(authHeader);
+
+  // Validate user existence and status
+  if (!user || user.status !== this._statusEnum.ACTIVE) {
+    throw new NotFoundException("User not found or inactive.");
+  }
+
+  // Extract hashedAuthToken from the password field in authHeader
+  const hashedAuthToken: string = user.password;
+
+  // Decrypt the current password using the extracted hash
+  const isCurrentPasswordValid: boolean = await compare(
+    passwordDto.currentPassword,
+    hashedAuthToken
+  );
+
+  // If the current password is valid, update it with the new password
+  if (isCurrentPasswordValid) {
+    // Encrypt the new password with bcrypt
+    //const hashedNewPassword: string = await bcrypt.hash(passwordDto.newPassword, 40);
+    const salt = await genSalt(10);
+    
+    const hashedNewPassword = await hash(passwordDto.newPassword, salt); 
+    
+    // Update user's password
+    user.password = hashedNewPassword;
+
+    // Save the updated user in the repository
+    return await this._userRepository.save(user);
+  } else {
+    // Throw an exception if the current password is not valid
+    throw new UnauthorizedException("Invalid current password.");
+  }
+  }
+} 
