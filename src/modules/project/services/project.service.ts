@@ -17,6 +17,7 @@ import { CreateProjectDto } from '../dto/create-project.dto';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { Project } from '../entities/project.entity';
 import { User } from 'src/modules/user/entities/user.entity';
+import { Access } from 'src/modules/user/entities/access.entity';
 
 @Injectable()
 export class ProjectService {
@@ -30,6 +31,8 @@ export class ProjectService {
     private projectRepository: Repository<Project>,
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
+    @InjectRepository(Access)
+    private readonly _accessRepository: Repository<Access>,
   ) {}
 
   /**
@@ -64,11 +67,19 @@ export class ProjectService {
         ...createProjectDto,
         accessToken: '',
         refreshToken: '',
-        users: [{ id: user.id } as User],
       });
 
       if (!project)
         throw new ConflictException('Project could not be created.');
+
+      // Create Access Instance.
+      const access = new Access();
+      // Assign User and Project to Access.
+      access.user = user;
+      access.project = project;
+
+      // Save Access.
+      await this._accessRepository.save(access);
 
       // Save Project.
       const savedProject = await this.projectRepository.save(project);
@@ -119,10 +130,10 @@ export class ProjectService {
       // Calculate startIndex.
       const startIndex = (page - 1) * limit;
 
-      // Find Projects with pagination.
       const projects = await this.projectRepository
         .createQueryBuilder('project')
-        .innerJoin('project.users', 'user')
+        .innerJoin('project.accessList', 'access') // Ajustar para la relación con Access.
+        .innerJoin('access.user', 'user') // Unirse a User a través de Access.
         .where('user.id = :userId', { userId: user.id })
         .orderBy('project.createdAt', 'DESC')
         .skip(startIndex)
@@ -228,27 +239,11 @@ export class ProjectService {
       if (!project) {
         throw new NotFoundException(`Project with ID ${id} not found`);
       }
-      // Search all Users that have a relationship with the Project.
-      const users = await this._userRepository
-        .createQueryBuilder('user')
-        .innerJoinAndSelect(
-          'user.projects',
-          'project',
-          'project.id = :projectId',
-          { projectId: id },
-        )
-        .getMany();
 
-      // Remove Project from Users.
-      for (const user of users) {
-        user.projects = user.projects.filter((project) => project.id !== id);
-        await this._userRepository.save(user);
-      }
-
-      await this.projectRepository
+      await this._accessRepository
         .createQueryBuilder()
         .delete()
-        .from('access')
+        .from(Access)
         .where('project_id = :projectId', { projectId: id })
         .execute();
 

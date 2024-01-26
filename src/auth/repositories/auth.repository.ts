@@ -5,20 +5,25 @@ import { Role } from '../../modules/role/entities/role.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RoleTypeEnum } from '../../shared/enums/role-type.enum';
 import { genSalt, hash } from 'bcryptjs';
+import { RoleGranted } from 'src/modules/user/entities/roles-granted.entity';
+import { SmtpService } from 'src/modules/smtp/services/smtp.service';
 
 @EntityRepository(User)
 export class AuthRepository extends Repository<User> {
   private readonly _roleType = RoleTypeEnum;
   constructor(
+    @InjectRepository(RoleGranted)
+    private readonly _roleGrantedRepository: Repository<RoleGranted>,
     @InjectRepository(Role)
     private readonly _roleRepository: Repository<Role>,
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
+    private readonly _smtpService: SmtpService,
   ) {
     super();
   }
 
-  async signUp(user: SignUpDto) {
+  async signUp(user: SignUpDto, token: string) {
     // Get user data from DTO.
     const { name, lastName, email, password }: SignUpDto = user;
     // Get default role from database.
@@ -33,10 +38,27 @@ export class AuthRepository extends Repository<User> {
       lastName,
       email,
       password: await hash(password, salt),
-      roles: [defaultRole],
     });
+
+    // Create RoleGranted instance.
+    const roleGranted = new RoleGranted();
+
+    // Assign role to user.
+    roleGranted.user = newUser;
+    roleGranted.role = defaultRole;
+    // Set activation token to user.
+    newUser.activationToken = token;
+
+    // Send Verification Email.
+    await this._smtpService.sendEmailToConfirmEmailAddress(
+      newUser.name,
+      newUser.email,
+    );
 
     // Save user.
     await this._userRepository.save(newUser);
+
+    // Save role granted.
+    await this._roleGrantedRepository.save(roleGranted);
   }
 }

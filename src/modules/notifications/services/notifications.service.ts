@@ -28,7 +28,7 @@ export class NotificationsService {
     private readonly chainService: ChainService,
     private readonly _paymentService: PaymentService,
     private readonly _orderService: OrderService,
-  ) { }
+  ) {}
 
   /**
    * @memberof NotificationsService
@@ -96,7 +96,14 @@ export class NotificationsService {
     });
   }
 
-  async hitCoiniWebhook(dynamicWallet, txhash, address, value, token, contract) {
+  async hitCoiniWebhook(
+    dynamicWallet,
+    txhash,
+    address,
+    value,
+    token,
+    contract,
+  ) {
     // Create the order payload
     const orderReceive: OrderReceiveDto = {
       status: TxStatus.SUCCESS,

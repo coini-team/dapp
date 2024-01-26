@@ -57,4 +57,20 @@ export enum Security {
 
 export enum Coini {
   COINI_API_URL = 'COINI_API_URL',
+  COINI_BACKOFFICE_URL = 'COINI_BACKOFFICE_URL',
+}
+
+/**
+ * @description Enum for smtp keys
+ * @enum {string}
+ * @readonly
+ */
+export enum Smtp {
+  SMTP_HOST = 'SMTP_HOST',
+  SMTP_USER = 'SMTP_USER',
+  SMTP_PASSWORD = 'SMTP_PASSWORD',
+  SMTP_PORT = 'SMTP_PORT',
+  SMTP_SECURE = 'SMTP_SECURE',
+  SMTP_FROM = 'SMTP_FROM',
+  SMTP_TO = 'SMTP_TO',
 }
