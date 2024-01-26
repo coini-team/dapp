@@ -21,7 +21,7 @@ export class CryptoNetwork {
   @Column({ length: 50 })
   contract: string;
 
-  @Column({ nullable: false })
+  @Column({ default: 0, type: 'int' })
   decimals: number;
 
   @Column({
