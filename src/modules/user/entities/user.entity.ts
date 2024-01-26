@@ -31,7 +31,7 @@ export class User {
   @Column({ name: 'password', nullable: false, length: 255, type: 'varchar' })
   password: string;
 
-  @Column({ name: 'wallet', nullable: false, length: 45, type: 'varchar' })
+  @Column({ name: 'wallet', nullable: false, length: 45, type: 'varchar', default: ''})
   wallet: string;
 
   @ManyToMany(() => Role, (role) => role.users, { eager: true })
