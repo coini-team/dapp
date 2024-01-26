@@ -1,4 +1,3 @@
-import { NotFoundException } from '@nestjs/common';
 import { ethers } from 'ethers';
 
 // export const getEthBigAmount_ = (amount: string, decimals: number): bigint => {

@@ -15,10 +15,10 @@ import { AuthRepository } from '../repositories/auth.repository';
 import { SignInDto, SignUpDto } from '../dto';
 import { compare } from 'bcryptjs';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
-import { RoleTypeEnum } from '../../shared/enums/role-type.enum';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../modules/user/entities/user.entity';
+import { SmtpService } from 'src/modules/smtp/services/smtp.service';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +35,7 @@ export class AuthService {
     private readonly _authRepository: AuthRepository,
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
+    private readonly _smtpService: SmtpService,
   ) {}
 
   async signUp(user: SignUpDto) {
@@ -42,10 +43,11 @@ export class AuthService {
     const userExist: User = await this._userRepository.findOne({
       where: { email },
     });
-
     if (userExist) throw new ConflictException('User already exist');
+    // Generate Token for verification.
+    const { accessToken } = await this.generateTokens(user);
 
-    return this._authRepository.signUp(user);
+    return this._authRepository.signUp(user, accessToken);
   }
 
   async signIn(user: SignInDto): Promise<{
@@ -68,7 +70,6 @@ export class AuthService {
       id: userExist.id,
       name: userExist.name,
       email: userExist.email,
-      roles: userExist.roles.map((role) => role.name as RoleTypeEnum),
     };
 
     const tokens = this.generateTokens(payload);

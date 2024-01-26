@@ -19,6 +19,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { ChainModule } from './modules/chain/chain.module';
 import { RoleModule } from './modules/role/role.module';
 import { OrderModule } from './modules/order/order.module';
+import { SmtpModule } from './modules/smtp/smtp.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { OrderModule } from './modules/order/order.module';
     ChainModule,
     RoleModule,
     OrderModule,
+    SmtpModule,
   ],
   controllers: [],
   providers: [],

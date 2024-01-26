@@ -4,15 +4,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 // Local Dependencies.
+import { RoleGranted } from 'src/modules/user/entities/roles-granted.entity';
 import { StatusEnum } from '../../../shared/enums/status.enum';
-import { User } from '../../user/entities/user.entity';
 
 @Entity('roles')
 export class Role extends BaseEntity {
@@ -25,9 +24,8 @@ export class Role extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   description: string;
 
-  @ManyToMany(() => User, (user) => user.roles)
-  @JoinColumn()
-  users: User[];
+  @OneToMany(() => RoleGranted, (roleGranted) => roleGranted.role)
+  rolesGranted: RoleGranted[];
 
   @Column({
     type: 'enum',

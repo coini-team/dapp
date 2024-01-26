@@ -1,0 +1,74 @@
+import { MailerService } from '@nestjs-modules/mailer';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { EmailToCustomerDto, SingleEmailDto } from '../dto/smtp.dto';
+import { ConfigService } from 'src/config/config.service';
+import { Coini } from 'src/config/config.keys';
+
+@Injectable()
+export class SmtpService {
+  // Logger Instance.
+  private readonly _logger = new Logger(':::: SmtpService ::::', {
+    timestamp: true,
+  });
+
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly _configService: ConfigService,
+  ) {}
+
+  async sendMultipleEmails<T>(emailDetails: EmailToCustomerDto<T>) {
+    const { emails, subject, templateName, context } = emailDetails;
+    try {
+      await this.mailerService.sendMail({
+        to: emails,
+        subject,
+        template: `${__dirname}/../templates/${templateName}`,
+        context: context,
+      });
+      console.log('=> email sent OK');
+    } catch (error) {
+      console.log('=> smtp error:', error.message);
+    }
+  }
+
+  async sendSingleEmail(emailDetails: SingleEmailDto) {
+    try {
+      console.log('=> sending single email:', emailDetails.email);
+      await this.mailerService.sendMail({
+        to: emailDetails.email,
+        subject: emailDetails.subject,
+        template: `${process.cwd()}/src/modules/smtp/templates/confirmEmail.hbs`,
+        context: emailDetails.context,
+      });
+      console.log('=> email sent OK');
+    } catch (error) {
+      this._logger.error(error.message);
+      console.log('=> smtp error:', error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  // Send Email to Confirm Email Address.
+  async sendEmailToConfirmEmailAddress(name, email) {
+    try {
+      const mailDetails: SingleEmailDto = {
+        email: email,
+        template: 'confirmEmail',
+        subject: 'Confirma Tu Email',
+        context: {
+          name: name,
+          url: `${this._configService.get(
+            Coini.COINI_BACKOFFICE_URL,
+          )}/auth/confirm-email`,
+          message: 'Confirma Tu Correo',
+        },
+      };
+
+      // Send Mail.
+      await this.sendSingleEmail(mailDetails);
+    } catch (error) {
+      this._logger.error(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
+}
