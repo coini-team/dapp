@@ -16,9 +16,11 @@ import { StatusEnum } from '../../../shared/enums/status.enum';
 import { GenericMapper } from '../../../shared/helpers';
 import { User } from '../entities/user.entity';
 import { GetUserDto } from '../dto';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { passwordDto } from '../dto/password.dto';
 import { Role } from '../../role/entities/role.entity';
 import { AuthService } from '../../../auth/services/auth.service';
+import { RoleGranted } from '../entities/roles-granted.entity';
 
 @Injectable()
 export class UserService {
@@ -33,12 +35,12 @@ export class UserService {
     private readonly _userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly _roleRepository: Repository<Role>,
+    @InjectRepository(RoleGranted)
+    private readonly _roleGrantedRepository: Repository<RoleGranted>,
     private readonly _authService: AuthService,
-  ) { }
+  ) {}
 
-  async get(
-    @Headers('authorization') authHeader: string,
-  ): Promise<GetUserDto> {
+  async get(@Headers('authorization') authHeader: string): Promise<GetUserDto> {
     try {
       // Validate if the id is empty.
       await this._authService.getUserFromAuthToken(authHeader);
@@ -101,13 +103,20 @@ export class UserService {
     // Validate if the user exists.
     !userExists && new NotFoundException();
     // Validate if the role exists.
-    const roleExists: Role = await this._roleRepository.findOne(roleId, {
+    const roleExists = await this._roleRepository.findOne(roleId, {
       where: { status: this._statusEnum.ACTIVE },
     });
     // Validate if the role exists.
     !roleExists && new NotFoundException();
     // Add the role to the user.
-    userExists.roles = [...userExists.roles, roleExists];
+    const roleGranted = this._roleGrantedRepository.create({
+      user: userExists,
+      role: roleExists,
+    });
+
+    // Save the role.
+    await this._roleGrantedRepository.save(roleGranted);
+
     // Save the user.
     await this._userRepository.save(userExists);
     // Return true.

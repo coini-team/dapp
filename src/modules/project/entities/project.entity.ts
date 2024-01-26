@@ -4,15 +4,14 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany,
   JoinColumn,
   ManyToOne,
-  JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { StatusEnum } from '../../../shared/enums/status.enum';
-import { User } from 'src/modules/user/entities/user.entity';
 import { ModeEnum } from 'src/shared/enums/mode.enum';
 import { Chain } from 'src/modules/chain/entities/chain.entity';
+import { Access } from 'src/modules/user/entities/access.entity';
 
 @Entity()
 export class Project {
@@ -50,19 +49,8 @@ export class Project {
   })
   status: string;
 
-  @ManyToMany(() => User, (user) => user.projects)
-  @JoinTable({
-    name: 'access', // El mismo nombre de la tabla que definiste en User
-    inverseJoinColumn: {
-      name: 'user_id',
-      referencedColumnName: 'id',
-    },
-    joinColumn: {
-      name: 'project_id',
-      referencedColumnName: 'id',
-    },
-  })
-  users: User[];
+  @OneToMany(() => Access, (access) => access.project)
+  accessList: Access[];
 
   @ManyToOne(() => Chain, (chain) => chain.networks)
   @JoinColumn({ name: 'chain_id' })

@@ -3,16 +3,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinTable,
-  ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 // Local Dependencies.
-import { Role } from '../../role/entities/role.entity';
 import { StatusEnum } from '../../../shared/enums/status.enum';
-import { Project } from 'src/modules/project/entities/project.entity';
+import { Access } from './access.entity';
+import { RoleGranted } from './roles-granted.entity';
 
 @Entity('users')
 export class User {
@@ -34,34 +33,21 @@ export class User {
   @Column({ name: 'wallet', length: 45, type: 'varchar', default: ''})
   wallet: string;
 
-  @ManyToMany(() => Role, (role) => role.users, { eager: true })
-  @JoinTable({
-    name: 'user_roles',
-    joinColumn: { name: 'user_id' },
-    inverseJoinColumn: { name: 'role_id' },
-  })
-  roles: Role[];
+  @OneToMany(() => RoleGranted, (roleGranted) => roleGranted.user)
+  rolesGranted: RoleGranted[];
 
-  @ManyToMany(() => Project, (project) => project.users)
-  @JoinTable({
-    name: 'access',
-    joinColumn: {
-      name: 'user_id',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'project_id',
-      referencedColumnName: 'id',
-    },
-  })
-  projects: Project[];
+  @OneToMany(() => Access, (access) => access.user)
+  accessList: Access[];
 
   @Column({
     type: 'enum',
     enum: StatusEnum,
-    default: StatusEnum.ACTIVE,
+    default: StatusEnum.INACTIVE,
   })
   status: string;
+
+  @Column({ name: 'activation_token', nullable: true, type: 'varchar' })
+  activationToken: string;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
