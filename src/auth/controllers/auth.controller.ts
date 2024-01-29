@@ -45,4 +45,16 @@ export class AuthController {
   }> {
     return this._authService.signIn(signInDto);
   }
+
+  /**
+   * @memberof AuthController
+   * @description This method is used activate a user account.
+   * @param token
+   * @returns {Promise<User>}
+   */
+  @Post('activate-account')
+  @UsePipes(ValidationPipe)
+  async activateAccount(@Body('token') token: string) {
+    return this._authService.activateAccount(token);
+  }
 }

@@ -14,12 +14,13 @@ import { ConfigService } from 'src/config/config.service';
 import { JwtEnv } from '../../config/config.keys';
 import { AuthRepository } from '../repositories/auth.repository';
 import { SignInDto, SignUpDto } from '../dto';
-import { compare } from 'bcryptjs';
+import { compare, genSalt, hash } from 'bcryptjs';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../modules/user/entities/user.entity';
 import { SmtpService } from 'src/modules/smtp/services/smtp.service';
+import { GetUserDto } from 'src/modules/user/dto';
 
 @Injectable()
 export class AuthService {
@@ -39,18 +40,37 @@ export class AuthService {
     private readonly _smtpService: SmtpService,
   ) {}
 
-  async signUp(user: SignUpDto) {
+  /**
+   * @memberof AuthService
+   * @description This method is used to sign up a user.
+   * @param {SignUpDto} user
+   * @returns {Promise<void>}
+   * @throws {ConflictException}
+   */
+  async signUp(user: SignUpDto): Promise<void> {
     const { email }: SignUpDto = user;
     const userExist: User = await this._userRepository.findOne({
       where: { email },
     });
     if (userExist) throw new ConflictException('User already exist');
     // Generate Token for verification.
-    const { accessToken } = await this.generateTokens(user);
+    const token = await this.generateActivationHash(email);
 
-    return this._authRepository.signUp(user, accessToken);
+    return this._authRepository.signUp(user, token);
   }
 
+  /**
+   * @memberof AuthService
+   * @description This method is used to sign in a user.
+   * @param {Partial<SignInDto>} user
+   * @returns {Promise<{
+   *  tokens: { accessToken: string; refreshToken: string };
+   * user: JwtPayload;
+   * }>}
+   * @throws {ConflictException}
+   * @throws {UnauthorizedException}
+   * @throws {BadRequestException}
+   */
   async signIn(user: Partial<SignInDto>): Promise<{
     tokens: { accessToken: string; refreshToken: string };
     user: JwtPayload;
@@ -59,22 +79,28 @@ export class AuthService {
 
     let userExist;
 
-    if (email && wallet || password && wallet || email && password && wallet){
-      throw new BadRequestException('Choice one authentication method. With wallet or with mail')
+    if (
+      (email && wallet) ||
+      (password && wallet) ||
+      (email && password && wallet)
+    ) {
+      throw new BadRequestException(
+        'Choice one authentication method. With wallet or with mail',
+      );
     } else if (email && password) {
       // Autenticación por correo electrónico y contraseña
       userExist = await this._userRepository.findOne({
         where: { email },
       });
-    } else if(wallet) {
+    } else if (wallet) {
       // Autenticación por billetera
       userExist = await this._userRepository.findOne({
         where: { wallet },
       });
     }
-  
+
     if (!userExist) throw new ConflictException('User does not exist');
-  
+
     // Validar la contraseña si se proporciona
     if (password) {
       const isMatch = await compare(password, userExist.password);
@@ -92,6 +118,31 @@ export class AuthService {
     return {
       user: payload,
       tokens,
+    };
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to activate account.
+   * @param {string} token
+   * @returns {Promise<{ message: string; status: number }>}
+   * @throws {NotFoundException}
+   */
+  async activateAccount(
+    token: string,
+  ): Promise<{ message: string; status: number }> {
+    const user = await this._authRepository.activateAccount(token);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    await this._smtpService.sendEmailToSuccessfullAccountActivation(
+      user.name,
+      user.email,
+    );
+
+    return {
+      message: 'Account Activated',
+      status: 200,
     };
   }
 
@@ -157,6 +208,18 @@ export class AuthService {
         expiresIn: this.configService.get(JwtEnv.JWT_REFRESH_EXPIRES_IN),
       }),
     };
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to generate activation hash.
+   * @param {string} email
+   * @returns {Promise<string>}
+   */
+  async generateActivationHash(email: string): Promise<string> {
+    const salt = await genSalt();
+    const hashedEmail = await hash(email, salt);
+    return hashedEmail;
   }
 
   /**
