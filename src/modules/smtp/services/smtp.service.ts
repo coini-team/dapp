@@ -71,4 +71,30 @@ export class SmtpService {
       throw new BadRequestException(error.message);
     }
   }
+
+  /**
+   * @memberof SmtpService
+   * @description This method is used to send email to Successfull Account Activation.
+   * @param {string} name
+   * @param {string} email
+   * @returns {Promise<void>}
+   * @throws {BadRequestException}
+   */
+  async sendEmailToSuccessfullAccountActivation(name: string, email: string) {
+    try {
+      // Prepare and Send Email.
+      this.mailerService.sendMail({
+        to: email,
+        subject: 'Cuenta Activada',
+        template: `${process.cwd()}/src/modules/smtp/templates/succesfullAccountActivation.hbs`,
+        context: {
+          name: name,
+          message: 'Cuenta Activada',
+        },
+      });
+    } catch (error) {
+      this._logger.error(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
 }

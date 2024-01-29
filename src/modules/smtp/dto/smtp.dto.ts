@@ -20,7 +20,7 @@ export class SingleEmailDto {
 export class EmailContext {
   name: string;
 
-  url: string;
+  url?: string;
 
   message: string;
 }

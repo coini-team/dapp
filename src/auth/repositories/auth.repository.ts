@@ -7,10 +7,15 @@ import { RoleTypeEnum } from '../../shared/enums/role-type.enum';
 import { genSalt, hash } from 'bcryptjs';
 import { RoleGranted } from 'src/modules/user/entities/roles-granted.entity';
 import { SmtpService } from 'src/modules/smtp/services/smtp.service';
+import { NotFoundException } from '@nestjs/common';
+import { StatusEnum } from 'src/shared/enums/status.enum';
+import { GetUserDto } from 'src/modules/user/dto';
+import { GenericMapper } from 'src/shared/helpers';
 
 @EntityRepository(User)
 export class AuthRepository extends Repository<User> {
   private readonly _roleType = RoleTypeEnum;
+  private readonly mapper = new GenericMapper();
   constructor(
     @InjectRepository(RoleGranted)
     private readonly _roleGrantedRepository: Repository<RoleGranted>,
@@ -60,5 +65,26 @@ export class AuthRepository extends Repository<User> {
 
     // Save role granted.
     await this._roleGrantedRepository.save(roleGranted);
+  }
+
+  async activateAccount(token: string): Promise<GetUserDto> {
+    // Find user by activation token.
+    const user = await this._userRepository.findOne({
+      where: { activationToken: token },
+    });
+    // If user not found throw error.
+    if (!user) throw new NotFoundException('User not found');
+
+    // Activate user account and remove activation token.
+    user.status = StatusEnum.ACTIVE;
+    user.activationToken = null;
+
+    // Save user.
+    await this._userRepository.save(user);
+
+    // Map user to GetUserDto.
+    const userDto: GetUserDto = this.mapper.map(user, GetUserDto);
+
+    return userDto;
   }
 }
