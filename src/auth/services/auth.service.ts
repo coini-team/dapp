@@ -20,7 +20,6 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../modules/user/entities/user.entity';
 import { SmtpService } from 'src/modules/smtp/services/smtp.service';
-import { GetUserDto } from 'src/modules/user/dto';
 
 @Injectable()
 export class AuthService {

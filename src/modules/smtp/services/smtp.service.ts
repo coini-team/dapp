@@ -49,7 +49,7 @@ export class SmtpService {
   }
 
   // Send Email to Confirm Email Address.
-  async sendEmailToConfirmEmailAddress(name, email) {
+  async sendEmailToConfirmEmailAddress(name, email, token) {
     try {
       const mailDetails: SingleEmailDto = {
         email: email,
@@ -59,7 +59,7 @@ export class SmtpService {
           name: name,
           url: `${this._configService.get(
             Coini.COINI_BACKOFFICE_URL,
-          )}/auth/confirm-email`,
+          )}/confirm-account/${token}`,
           message: 'Confirma Tu Correo',
         },
       };
