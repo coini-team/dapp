@@ -58,6 +58,7 @@ export class AuthRepository extends Repository<User> {
     await this._smtpService.sendEmailToConfirmEmailAddress(
       newUser.name,
       newUser.email,
+      newUser.activationToken,
     );
 
     // Save user.
