@@ -43,11 +43,11 @@ export class UserService {
   async get(@Headers('authorization') authHeader: string): Promise<GetUserDto> {
     try {
       // Validate if the id is empty.
-      await this._authService.getUserFromAuthToken(authHeader);
+      const userAuth = await this._authService.getUserFromAuthToken(authHeader);
 
       // Find the user with the id and status active.
       const user = await this._userRepository.findOne({
-        where: { status: this._statusEnum.ACTIVE },
+        where: { status: this._statusEnum.ACTIVE, id: userAuth.id },
       });
 
       return this.mapper.map<User, GetUserDto>(user, GetUserDto);
