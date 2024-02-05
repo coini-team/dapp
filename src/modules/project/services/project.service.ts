@@ -69,6 +69,9 @@ export class ProjectService {
         refreshToken: '',
       });
 
+      // Save Project.
+      const savedProject = await this.projectRepository.save(project);
+
       if (!project)
         throw new ConflictException('Project could not be created.');
 
@@ -80,9 +83,6 @@ export class ProjectService {
 
       // Save Access.
       await this._accessRepository.save(access);
-
-      // Save Project.
-      const savedProject = await this.projectRepository.save(project);
 
       // Generate Access Token.
       const {
