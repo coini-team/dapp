@@ -1,7 +1,7 @@
 // Third Party Dependencies.
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { genSalt, hash, compare } from 'bcryptjs';
+import {InjectRepository} from '@nestjs/typeorm';
+import {Repository} from 'typeorm';
+import {genSalt, hash, compare} from 'bcryptjs';
 import {
   BadRequestException,
   NotFoundException,
@@ -12,15 +12,15 @@ import {
 } from '@nestjs/common';
 
 // Local Dependencies.
-import { StatusEnum } from '../../../shared/enums/status.enum';
-import { GenericMapper } from '../../../shared/helpers';
-import { User } from '../entities/user.entity';
-import { GetUserDto } from '../dto';
+import {StatusEnum} from '../../../shared/enums/status.enum';
+import {GenericMapper} from '../../../shared/helpers';
+import {User} from '../entities/user.entity';
+import {GetUserDto} from '../dto';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { passwordDto } from '../dto/password.dto';
-import { Role } from '../../role/entities/role.entity';
-import { AuthService } from '../../../auth/services/auth.service';
-import { RoleGranted } from '../entities/roles-granted.entity';
+import {passwordDto} from '../dto/password.dto';
+import {Role} from '../../role/entities/role.entity';
+import {AuthService} from '../../../auth/services/auth.service';
+import {RoleGranted} from '../entities/roles-granted.entity';
 
 @Injectable()
 export class UserService {
@@ -30,6 +30,7 @@ export class UserService {
   private readonly mapper = new GenericMapper();
   // Status Enum.
   private readonly _statusEnum = StatusEnum;
+
   constructor(
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
@@ -38,7 +39,8 @@ export class UserService {
     @InjectRepository(RoleGranted)
     private readonly _roleGrantedRepository: Repository<RoleGranted>,
     private readonly _authService: AuthService,
-  ) {}
+  ) {
+  }
 
   async get(@Headers('authorization') authHeader: string): Promise<GetUserDto> {
     try {
@@ -47,7 +49,7 @@ export class UserService {
 
       // Find the user with the id and status active.
       const user = await this._userRepository.findOne({
-        where: { status: this._statusEnum.ACTIVE, id: userAuth.id },
+        where: {status: this._statusEnum.ACTIVE, id: userAuth.id},
       });
 
       return this.mapper.map<User, GetUserDto>(user, GetUserDto);
@@ -62,23 +64,33 @@ export class UserService {
     updates: Partial<User>,
     @Headers('authorization') authHeader: string
   ): Promise<User> {
+    // Validate if the id is empty.
+    const userAuth = await this._authService.getUserFromAuthToken(authHeader);
+
     await this._authService.getUserFromAuthToken(authHeader);
-    const userExists: User = await this._userRepository.findOne({ where: { status: this._statusEnum.ACTIVE } });
+    const userExists: User = await this._userRepository.findOne({
+      where: {
+        status: this._statusEnum.ACTIVE,
+        id: userAuth.id
+      }
+    });
     !userExists && new NotFoundException();
-  
+
     // Actualizar solo los campos proporcionados en el objeto 'updates'
     Object.assign(userExists, updates);
-  
+
     return await this._userRepository.save(userExists);
   }
 
   async delete(
     @Headers('authorization') authHeader: string
   ): Promise<User> {
+    // Validate if the id is empty.
+    const userAuth = await this._authService.getUserFromAuthToken(authHeader);
     await this._authService.getUserFromAuthToken(authHeader);
     // Validate if the user exists.
     const userExists: User = await this._userRepository.findOne({
-      where: { status: this._statusEnum.ACTIVE },
+      where: {status: this._statusEnum.ACTIVE, id: userAuth.id},
     });
 
     // Verificar si el usuario existe
@@ -98,13 +110,13 @@ export class UserService {
     !userId && new BadRequestException('id must be sent');
     // Validate if the user exists.
     const userExists: User = await this._userRepository.findOne(userId, {
-      where: { status: this._statusEnum.ACTIVE },
+      where: {status: this._statusEnum.ACTIVE},
     });
     // Validate if the user exists.
     !userExists && new NotFoundException();
     // Validate if the role exists.
     const roleExists = await this._roleRepository.findOne(roleId, {
-      where: { status: this._statusEnum.ACTIVE },
+      where: {status: this._statusEnum.ACTIVE},
     });
     // Validate if the role exists.
     !roleExists && new NotFoundException();
@@ -128,38 +140,38 @@ export class UserService {
     @Headers('authorization') authHeader: string
   ): Promise<User> {
     // Obtain user from authentication token
-  const user: User = await this._authService.getUserFromAuthToken(authHeader);
+    const user: User = await this._authService.getUserFromAuthToken(authHeader);
 
-  // Validate user existence and status
-  if (!user || user.status !== this._statusEnum.ACTIVE) {
-    throw new NotFoundException("User not found or inactive.");
+    // Validate user existence and status
+    if (!user || user.status !== this._statusEnum.ACTIVE) {
+      throw new NotFoundException("User not found or inactive.");
+    }
+
+    // Extract hashedAuthToken from the password field in authHeader
+    const hashedAuthToken: string = user.password;
+
+    // Decrypt the current password using the extracted hash
+    const isCurrentPasswordValid: boolean = await compare(
+      passwordDto.currentPassword,
+      hashedAuthToken
+    );
+
+    // If the current password is valid, update it with the new password
+    if (isCurrentPasswordValid) {
+      // Encrypt the new password with bcrypt
+      //const hashedNewPassword: string = await bcrypt.hash(passwordDto.newPassword, 40);
+      const salt = await genSalt(10);
+
+      const hashedNewPassword = await hash(passwordDto.newPassword, salt);
+
+      // Update user's password
+      user.password = hashedNewPassword;
+
+      // Save the updated user in the repository
+      return await this._userRepository.save(user);
+    } else {
+      // Throw an exception if the current password is not valid
+      throw new UnauthorizedException("Invalid current password.");
+    }
   }
-
-  // Extract hashedAuthToken from the password field in authHeader
-  const hashedAuthToken: string = user.password;
-
-  // Decrypt the current password using the extracted hash
-  const isCurrentPasswordValid: boolean = await compare(
-    passwordDto.currentPassword,
-    hashedAuthToken
-  );
-
-  // If the current password is valid, update it with the new password
-  if (isCurrentPasswordValid) {
-    // Encrypt the new password with bcrypt
-    //const hashedNewPassword: string = await bcrypt.hash(passwordDto.newPassword, 40);
-    const salt = await genSalt(10);
-    
-    const hashedNewPassword = await hash(passwordDto.newPassword, salt); 
-    
-    // Update user's password
-    user.password = hashedNewPassword;
-
-    // Save the updated user in the repository
-    return await this._userRepository.save(user);
-  } else {
-    // Throw an exception if the current password is not valid
-    throw new UnauthorizedException("Invalid current password.");
-  }
-  }
-} 
+}
