@@ -1,6 +1,6 @@
 import {IsNotEmpty, IsString, IsInt, IsDate } from 'class-validator';
 
-export class ApiTrackingDto {
+export class RequestDto {
   @IsString()
   @IsNotEmpty()
   userId: string;
