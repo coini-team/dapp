@@ -6,7 +6,7 @@ export class NftMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     const ip = req.headers['x-real-ip'] || req.ip; 
 
-        // Obtén la fecha actual en UTC
+    // Obtén la fecha actual en UTC
     const DateUTC = new Date();
 
     // Ajusta la zona horaria a UTC-5
