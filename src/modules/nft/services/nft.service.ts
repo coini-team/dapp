@@ -52,7 +52,7 @@ export class NftService {
       );
       return result;
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       if (error.code === 'INSUFFICIENT_FUNDS') {
         const errorMessage =
           'Saldo insuficiente para cubrir el costo de la transacción';
