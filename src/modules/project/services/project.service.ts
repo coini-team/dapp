@@ -76,9 +76,6 @@ export class ProjectService {
       if (!project)
         throw new ConflictException('Project could not be created.');
 
-      // Save Project.
-      const savedProject = await this.projectRepository.save(project);
-
       // Create Access Instance.
       const access = new Access();
       // Assign User and Project to Access.
