@@ -4,61 +4,70 @@ import { Request, Response, NextFunction } from 'express';
 @Injectable()
 export class Middleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
-    const ip = req.headers['x-real-ip'] || req.ip;
+    try {
 
-    // Obtén la fecha actual en UTC
-    const DateUTC = new Date();
+      let data: any = {};
 
-    // Ajusta la zona horaria a UTC-5
-    const DateUTCMinus5 = new Date(DateUTC.getTime() - (5 * 60 * 60 * 1000));
+      data.ip = req.headers['x-real-ip'] || req.ip;
 
-    // Formatea la fecha en formato ISO
-    const time = DateUTCMinus5.toISOString();
+      // Obtén la fecha actual en UTC
+      const dateUTC = new Date();
 
-    console.log("=> Datos del Middleware");
-    console.log(`Request: ${req.method} ${req.url}`);
-    console.log(`IP: ${ip}, Time: ${time}`);
+      // Ajusta la zona horaria a UTC-5
+      const dateUTCMinus5 = new Date(dateUTC.getTime() - (5 * 60 * 60 * 1000));
 
-    // Imprimir el body del request si es un JSON
-    if (req.body && Object.keys(req.body).length) {
-      console.log("Request JSON:");
-      console.log(req.body);
-    }
+      // Formatea la fecha en formato ISO
+      data.time = dateUTCMinus5.toISOString();
 
-    const authorizationToken = req.headers['authorization'].substring(7); 
-    console.log('Authorization Token:', authorizationToken);
+      data.endpoint = `${req.method} ${req.url}`;
 
-    const jwt = require('jsonwebtoken');
-    const token = authorizationToken
-    const id = jwt.decode(token).id;
-    console.log('ID:', id);
-
-    // const originalSend = res.send;
-    res.send = function(body): any {
-      if (body !== undefined) {
-        // Si hay un cuerpo de respuesta, imprímelo
-        console.log("Response JSON:");
-        console.log(body);
+      // body del request si es un JSON
+      if (req.body && Object.keys(req.body).length) {
+        data.request = JSON.stringify(req.body);
       }
-    
-      // Imprimir el código de estado de la respuesta
-      console.log("Status Code:", res.statusCode);
-    
-      // No hagas nada más, solo imprime en consola
-    };
 
-    res.on('finish', () => {
-      // Obtener la fecha actual cuando se envía la respuesta
-      const setFinishTime = new Date();
+      const authorizationToken = req.headers['authorization']?.substring(7);
+      data.access_token = authorizationToken;
 
-      // Calcular la diferencia de tiempo en milisegundos
-      const responseTime = setFinishTime.getTime() - DateUTC.getTime();
-      console.log(`Response Time: ${responseTime}ms`);
-    });
+      if (authorizationToken) {
+        const jwt = require('jsonwebtoken');
+        const decodedToken = jwt.decode(authorizationToken);
+        if (decodedToken && decodedToken.id) {
+          data.projectId = decodedToken.id;
+        } else {
+          console.log('Error: Invalid token or missing ID');
+        }
+      } else {
+        console.log('Error: Authorization token missing');
+      }
 
-    // Aquí puedes realizar lógica adicional si es necesario
+      const originalSend = res.send;
+      res.send = function (body): any {
+        if (body !== undefined) {
+          data.response = body;
+        }
 
-    next(); // Llamar a next sin parámetros, ya que no estás manejando errores directamente en este middleware
+        // const status = res.statusCode;
+        data.status_code = res.statusCode;
+
+        // Obtener la fecha actual cuando se envía la respuesta
+        const setFinishTime = new Date();
+
+        // Calcular la diferencia de tiempo en milisegundos
+        const responseTime = setFinishTime.getTime() - dateUTC.getTime();
+        data.duration = `${responseTime}ms`;
+
+        console.log(" => body para la base de datos", data)
+        // No hagas nada más, solo imprime en consola
+        return originalSend.apply(res, arguments);
+      };
+
+      // Aquí puedes realizar lógica adicional si es necesario
+      next();
+      // Llamar a next sin parámetros, ya que no estás manejando errores directamente en este middleware
+    } catch (error) {
+      console.error('Error en el middleware:', error.message);
+      next(error);
+    }
   }
 }
-

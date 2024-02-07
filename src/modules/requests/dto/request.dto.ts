@@ -1,9 +1,9 @@
-import {IsNotEmpty, IsString, IsInt, IsDate } from 'class-validator';
+import {IsNotEmpty, IsString, IsInt, IsDate, IsJSON } from 'class-validator';
 
 export class RequestDto {
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  projectId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -13,11 +13,11 @@ export class RequestDto {
   @IsNotEmpty()
   apiKey: string;
 
-  @IsString()
+  @IsJSON()
   @IsNotEmpty()
   request: string;
 
-  @IsString()
+  @IsJSON()
   @IsNotEmpty()
   response: string;
 
