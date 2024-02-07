@@ -7,11 +7,11 @@ import {
   
   @Entity('requests')
   export class ApiRequests {
-    @PrimaryColumn({ name: 'proyectId', nullable: false, type: 'varchar' })
+    @PrimaryColumn({ name: 'projectId', nullable: false, type: 'varchar' })
     ProjectId: string;
   
     @Column({ name: 'endpoint', nullable: false, type: 'varchar' })
-    endPoint: string;
+    endpoint: string;
   
     @Column({ name: 'access_token', nullable: true, type: 'varchar' })
     accessToken: string;
