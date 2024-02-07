@@ -1,16 +1,20 @@
 // Third Party Dependencies.
 import { Contract, ethers, Wallet } from 'ethers';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Headers, ForbiddenException } from '@nestjs/common';
 
 // Local Dependencies.
 import FactoryERC721_ABI from '../../../contracts/abis/FactoryERC721_ABI.json';
+import { ProjectService } from '../../project/services/project.service';
 import { ConfigService } from '../../../config/config.service';
 import { Blockchain } from '../../../config/config.keys';
 import { DeployNftDto } from '../dto/deploy-nft.dto';
 
 @Injectable()
 export class NftService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly _authProject: ProjectService,
+    ) { }
 
   /**
    * @todo Refactor this.
@@ -21,6 +25,7 @@ export class NftService {
     wallet: Wallet,
     tokenParams: DeployNftDto,
     rpcUrl: string,
+    @Headers('authorization') authHeader: string,
   ): Promise<any> {
     const { name, symbol } = tokenParams;
     const methodName = 'createNewContract(string,string)'; // TODO: Change this to the correct method name from the ABI.
@@ -32,6 +37,14 @@ export class NftService {
       wallet.connect(provider),
     );
     try {
+      // Obtener el usuario que solicita el despliegue
+      const project = await this._authProject.getProjectToken(authHeader);
+      // Comprobar que el usuario pertenece a la organización
+      if (!project.id) {
+        // Lanzar una excepción personalizada si no tiene los permisos necesarios
+        throw new ForbiddenException('No tienes permiso para desplegar este token NFT.');
+      }
+      // Llamar al método del contrato inteligente para desplegar el token NFT
       const result = await contract[methodName](name, symbol);
       console.log(
         `ERC721 Smart Contract Method "${methodName}" Result:`,
@@ -39,14 +52,15 @@ export class NftService {
       );
       return result;
     } catch (error) {
-      console.error(error);
+      // console.error(error);
       if (error.code === 'INSUFFICIENT_FUNDS') {
         const errorMessage =
           'Saldo insuficiente para cubrir el costo de la transacción';
 
         // Puedes lanzar una excepción personalizada si lo prefieres
         throw new NotFoundException(errorMessage);
-      }
+      } 
+      throw error;
     }
   }
 

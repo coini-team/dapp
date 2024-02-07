@@ -48,6 +48,7 @@ export class UserService {
       // Find the user with the id and status active.
       const user = await this._userRepository.findOne({
         where: { status: this._statusEnum.ACTIVE, id: userAuth.id },
+        select: ['id', 'name', 'lastName', 'email', 'wallet'],
       });
 
       return this.mapper.map<User, GetUserDto>(user, GetUserDto);

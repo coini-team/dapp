@@ -10,6 +10,7 @@ import {
   Query,
   UsePipes,
   ValidationPipe,
+  Headers,
 } from '@nestjs/common';
 
 // Local Dependencies.
@@ -36,6 +37,7 @@ export class NftController {
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
     @Query('chain') chain: string,
+    @Headers('authorization') authHeader: string,
   ): Promise<any> {
     try {
       const rpcUrl = await this.walletService.getRpcUrl(chain);
@@ -46,6 +48,7 @@ export class NftController {
         wallet,
         tokenParams,
         rpcUrl,
+        authHeader,
       );
       return { success: true, data: result };
     } catch (error) {
