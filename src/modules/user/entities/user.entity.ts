@@ -30,7 +30,7 @@ export class User {
   @Column({ name: 'password', nullable: false, length: 255, type: 'varchar' })
   password: string;
 
-  @Column({ name: 'wallet', length: 45, type: 'varchar', default: ''})
+  @Column({ name: 'wallet', length: 45, type: 'varchar', default: '' })
   wallet: string;
 
   @OneToMany(() => RoleGranted, (roleGranted) => roleGranted.user)
