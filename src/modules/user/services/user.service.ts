@@ -30,6 +30,7 @@ export class UserService {
   private readonly mapper = new GenericMapper();
   // Status Enum.
   private readonly _statusEnum = StatusEnum;
+
   constructor(
     @InjectRepository(User)
     private readonly _userRepository: Repository<User>,
@@ -61,25 +62,33 @@ export class UserService {
 
   async update(
     updates: Partial<User>,
-    @Headers('authorization') authHeader: string
+    @Headers('authorization') authHeader: string,
   ): Promise<User> {
+    // Validate if the id is empty.
+    const userAuth = await this._authService.getUserFromAuthToken(authHeader);
+
     await this._authService.getUserFromAuthToken(authHeader);
-    const userExists: User = await this._userRepository.findOne({ where: { status: this._statusEnum.ACTIVE } });
+    const userExists: User = await this._userRepository.findOne({
+      where: {
+        status: this._statusEnum.ACTIVE,
+        id: userAuth.id,
+      },
+    });
     !userExists && new NotFoundException();
-  
+
     // Actualizar solo los campos proporcionados en el objeto 'updates'
     Object.assign(userExists, updates);
-  
+
     return await this._userRepository.save(userExists);
   }
 
-  async delete(
-    @Headers('authorization') authHeader: string
-  ): Promise<User> {
+  async delete(@Headers('authorization') authHeader: string): Promise<User> {
+    // Validate if the id is empty.
+    const userAuth = await this._authService.getUserFromAuthToken(authHeader);
     await this._authService.getUserFromAuthToken(authHeader);
     // Validate if the user exists.
     const userExists: User = await this._userRepository.findOne({
-      where: { status: this._statusEnum.ACTIVE },
+      where: { status: this._statusEnum.ACTIVE, id: userAuth.id },
     });
 
     // Verificar si el usuario existe
@@ -126,41 +135,41 @@ export class UserService {
 
   async updatePassword(
     passwordDto: passwordDto,
-    @Headers('authorization') authHeader: string
+    @Headers('authorization') authHeader: string,
   ): Promise<User> {
     // Obtain user from authentication token
-  const user: User = await this._authService.getUserFromAuthToken(authHeader);
+    const user: User = await this._authService.getUserFromAuthToken(authHeader);
 
-  // Validate user existence and status
-  if (!user || user.status !== this._statusEnum.ACTIVE) {
-    throw new NotFoundException("User not found or inactive.");
+    // Validate user existence and status
+    if (!user || user.status !== this._statusEnum.ACTIVE) {
+      throw new NotFoundException('User not found or inactive.');
+    }
+
+    // Extract hashedAuthToken from the password field in authHeader
+    const hashedAuthToken: string = user.password;
+
+    // Decrypt the current password using the extracted hash
+    const isCurrentPasswordValid: boolean = await compare(
+      passwordDto.currentPassword,
+      hashedAuthToken,
+    );
+
+    // If the current password is valid, update it with the new password
+    if (isCurrentPasswordValid) {
+      // Encrypt the new password with bcrypt
+      //const hashedNewPassword: string = await bcrypt.hash(passwordDto.newPassword, 40);
+      const salt = await genSalt(10);
+
+      const hashedNewPassword = await hash(passwordDto.newPassword, salt);
+
+      // Update user's password
+      user.password = hashedNewPassword;
+
+      // Save the updated user in the repository
+      return await this._userRepository.save(user);
+    } else {
+      // Throw an exception if the current password is not valid
+      throw new UnauthorizedException('Invalid current password.');
+    }
   }
-
-  // Extract hashedAuthToken from the password field in authHeader
-  const hashedAuthToken: string = user.password;
-
-  // Decrypt the current password using the extracted hash
-  const isCurrentPasswordValid: boolean = await compare(
-    passwordDto.currentPassword,
-    hashedAuthToken
-  );
-
-  // If the current password is valid, update it with the new password
-  if (isCurrentPasswordValid) {
-    // Encrypt the new password with bcrypt
-    //const hashedNewPassword: string = await bcrypt.hash(passwordDto.newPassword, 40);
-    const salt = await genSalt(10);
-    
-    const hashedNewPassword = await hash(passwordDto.newPassword, salt); 
-    
-    // Update user's password
-    user.password = hashedNewPassword;
-
-    // Save the updated user in the repository
-    return await this._userRepository.save(user);
-  } else {
-    // Throw an exception if the current password is not valid
-    throw new UnauthorizedException("Invalid current password.");
-  }
-  }
-} 
+}

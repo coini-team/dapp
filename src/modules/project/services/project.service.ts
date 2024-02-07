@@ -70,6 +70,9 @@ export class ProjectService {
         refreshToken: '',
       });
 
+      // Save Project.
+      const savedProject = await this.projectRepository.save(project);
+
       if (!project)
         throw new ConflictException('Project could not be created.');
 

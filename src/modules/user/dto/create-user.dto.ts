@@ -17,10 +17,10 @@ export class CreateUserDto {
   @IsEmail()
   @Length(1, 45)
   email: string;
-  
+
   @IsString()
   @Length(0, 45)
-  wallet:string
+  wallet: string;
 
   // Asumiendo que 'Role' es una clase con su propia validación
   roles: Role[];

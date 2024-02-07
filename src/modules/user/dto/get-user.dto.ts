@@ -20,5 +20,5 @@ export class GetUserDto {
 
   @IsString()
   @IsNotEmpty()
-  wallet:string
+  wallet: string;
 }
