@@ -20,6 +20,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../modules/user/entities/user.entity';
 import { SmtpService } from 'src/modules/smtp/services/smtp.service';
+import {StatusEnum} from "../../shared/enums/status.enum";
 
 @Injectable()
 export class AuthService {
@@ -87,20 +88,21 @@ export class AuthService {
         'Choice one authentication method. With wallet or with mail',
       );
     } else if (email && password) {
-      // Autenticación por correo electrónico y contraseña
+      // Check if user exist and is active.
       userExist = await this._userRepository.findOne({
-        where: { email },
+        where: { email, status: StatusEnum.ACTIVE},
       });
     } else if (wallet) {
-      // Autenticación por billetera
+      // Check if user exist and is active.
       userExist = await this._userRepository.findOne({
-        where: { wallet },
+        where: { wallet, status: StatusEnum.ACTIVE},
       });
     }
 
+    // Check if user exist.
     if (!userExist) throw new ConflictException('User does not exist');
 
-    // Validar la contraseña si se proporciona
+    // Check if password is provided.
     if (password) {
       const isMatch = await compare(password, userExist.password);
       if (!isMatch) throw new UnauthorizedException('Invalid credentials');
