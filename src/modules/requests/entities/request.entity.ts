@@ -6,7 +6,7 @@ import {
   } from 'typeorm';
   
   @Entity('requests')
-  export class ApiRequests {
+  export class Requests {
     @PrimaryColumn({ name: 'projectId', nullable: false, type: 'varchar' })
     ProjectId: string;
   

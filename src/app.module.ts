@@ -9,6 +9,7 @@ import { ConfigService } from './config/config.service';
 import { ConfigModule } from './config/config.module';
 import { Configuration } from './config/config.keys';
 import { NftModule } from './modules/nft/nft.module';
+import { RequestModule } from './modules/requests/request.module';
 import { DatabaseModule } from './database/database.module';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './auth/auth.module';
@@ -40,6 +41,7 @@ import { SmtpModule } from './modules/smtp/smtp.module';
     RoleModule,
     OrderModule,
     SmtpModule,
+    RequestModule,
   ],
   controllers: [],
   providers: [],
