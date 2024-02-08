@@ -1,4 +1,4 @@
-import {IsNotEmpty, IsString, IsInt, IsDate, IsJSON } from 'class-validator';
+import {IsNotEmpty, IsString, IsDate, IsJSON, IsObject } from 'class-validator';
 
 export class RequestDto {
   @IsString()
@@ -7,29 +7,33 @@ export class RequestDto {
 
   @IsString()
   @IsNotEmpty()
-  endPoint: string;
+  endpoint: string;
 
   @IsString()
   @IsNotEmpty()
-  apiKey: string;
+  accessToken: string;
 
-  @IsJSON()
+  @IsObject()
   @IsNotEmpty()
-  request: string;
+  request: object;
 
-  @IsJSON()
+  @IsObject()
   @IsNotEmpty()
-  response: string;
+  response: object;
 
   @IsString()
+  @IsNotEmpty()
   statusCode: string;
 
-  @IsInt()
-  duration: number;
+  @IsString()
+  @IsNotEmpty()
+  duration: string;
 
   @IsString()
+  @IsNotEmpty()
   ip: string;
 
-  @IsDate()
-  callDate: Date;
+  @IsString()
+  @IsNotEmpty()
+  callDate: string;
 }

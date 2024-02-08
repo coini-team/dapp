@@ -1,14 +1,17 @@
 import {
     Column,
     Entity,
-    PrimaryColumn,
+    PrimaryGeneratedColumn,
     UpdateDateColumn,
   } from 'typeorm';
   
   @Entity('requests')
   export class Requests {
-    @PrimaryColumn({ name: 'projectId', nullable: false, type: 'varchar' })
-    ProjectId: string;
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column({ name: 'projectId', nullable: false, type: 'varchar' })
+    projectId: string;
   
     @Column({ name: 'endpoint', nullable: false, type: 'varchar' })
     endpoint: string;
@@ -16,21 +19,21 @@ import {
     @Column({ name: 'access_token', nullable: true, type: 'varchar' })
     accessToken: string;
   
-    @Column({ name: 'request', nullable: true, type: 'varchar' })
+    @Column({ name: 'request', nullable: true, type: 'text' })
     request: string;
   
-    @Column({ name: 'response', nullable: false, type: 'varchar' })
+    @Column({ name: 'response', nullable: false, type: 'text' })
     response: string;
   
     @Column({ name: 'status_code', type: 'varchar', default: '' })
     statusCode: string;
   
-    @Column({ name: 'duration', nullable: true, type: 'int' })
-    duration: number;
+    @Column({ name: 'duration', nullable: true, type: 'varchar' })
+    duration: string;
   
     @Column({ name: 'ip', nullable: true, type: 'varchar' })
     ip: string;
   
     @UpdateDateColumn({ type: 'timestamp', name: 'call_date' })
-    callDate: Date;
+    callDate: string;
   }

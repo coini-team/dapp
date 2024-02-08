@@ -1,33 +1,25 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+import axios from 'axios';
 
 @Injectable()
 export class Middleware implements NestMiddleware {
+  private readonly logger = new Logger(Middleware.name);
+
   use(req: Request, res: Response, next: NextFunction): void {
     try {
-
-      let data: any = {};
+      const data: any = {};
 
       data.ip = req.headers['x-real-ip'] || req.ip;
-
-      // Obtén la fecha actual en UTC
-      const dateUTC = new Date();
-
-      // Ajusta la zona horaria a UTC-5
-      const dateUTCMinus5 = new Date(dateUTC.getTime() - (5 * 60 * 60 * 1000));
-
-      // Formatea la fecha en formato ISO
-      data.time = dateUTCMinus5.toISOString();
-
+      data.call_date = new Date(new Date().getTime() - (5 * 60 * 60 * 1000)).toISOString();
       data.endpoint = `${req.method} ${req.url}`;
 
-      // body del request si es un JSON
       if (req.body && Object.keys(req.body).length) {
         data.request = JSON.stringify(req.body);
       }
 
       const authorizationToken = req.headers['authorization']?.substring(7);
-      data.access_token = authorizationToken;
+      data.accessToken = authorizationToken;
 
       if (authorizationToken) {
         const jwt = require('jsonwebtoken');
@@ -35,10 +27,10 @@ export class Middleware implements NestMiddleware {
         if (decodedToken && decodedToken.id) {
           data.projectId = decodedToken.id;
         } else {
-          console.log('Error: Invalid token or missing ID');
+          this.logger.error('Invalid token or missing ID');
         }
       } else {
-        console.log('Error: Authorization token missing');
+        this.logger.error('Authorization token missing');
       }
 
       const originalSend = res.send;
@@ -47,26 +39,26 @@ export class Middleware implements NestMiddleware {
           data.response = body;
         }
 
-        // const status = res.statusCode;
-        data.status_code = res.statusCode;
+        data.statusCode = res.statusCode;
 
-        // Obtener la fecha actual cuando se envía la respuesta
         const setFinishTime = new Date();
-
-        // Calcular la diferencia de tiempo en milisegundos
-        const responseTime = setFinishTime.getTime() - dateUTC.getTime();
+        const responseTime = setFinishTime.getTime() - new Date(data.call_date).getTime();
         data.duration = `${responseTime}ms`;
 
-        console.log(" => body para la base de datos", data)
-        // No hagas nada más, solo imprime en consola
+        async function sendData() {
+          console.log(" => body para la base de datos", data);
+          await axios.post('http://localhost:8080/api/requests', data);
+          console.log(" => body enviado a la base de datos");
+        }
+        sendData();
         return originalSend.apply(res, arguments);
       };
 
-      // Aquí puedes realizar lógica adicional si es necesario
+
+
       next();
-      // Llamar a next sin parámetros, ya que no estás manejando errores directamente en este middleware
     } catch (error) {
-      console.error('Error en el middleware:', error.message);
+      this.logger.error('Error en el middleware:', error.message);
       next(error);
     }
   }
