@@ -8,15 +8,17 @@ import { Network } from '../chain/entities/network.entity';
 import { ConfigModule } from '../../config/config.module';
 import { NftService } from './services/nft.service';
 import { WalletModule } from '../wallet/wallet.module';
-import { ProjectModule } from '../project/project.module'; 
+import { ProjectModule } from '../project/project.module';
 import { Middleware } from '../../middleware/nft.middleware';
+import { RequestModule } from "../requests/request.module";
 
 @Module({
   imports: [
-    ConfigModule, 
-    WalletModule, 
-    ProjectModule, 
-    TypeOrmModule.forFeature([Network])
+    ConfigModule,
+    WalletModule,
+    ProjectModule,
+    TypeOrmModule.forFeature([Network]),
+    RequestModule
   ],
   providers: [NftService],
   controllers: [NftController],

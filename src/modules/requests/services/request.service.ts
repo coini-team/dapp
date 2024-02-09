@@ -4,18 +4,46 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 // Local Dependencies.
-import { ApiRequests } from '../entities/request.entity';
+import { Requests } from '../entities/request.entity';
 import { RequestDto } from '../dto/request.dto';
 
 @Injectable()
 export class RequestService {
   constructor(
-    @InjectRepository(ApiRequests)
-    private readonly requestRepository: Repository<ApiRequests>,
+    @InjectRepository(Requests)
+    private readonly requestRepository: Repository<Requests>,
   ) {}
 
-  async create(requestTrackingInput: RequestDto): Promise<ApiRequests> {
-    const requestTracking = this.requestRepository.create(requestTrackingInput);
-    return await this.requestRepository.save(requestTracking);
+  async create(requestTrackingInput: RequestDto): Promise<Requests> {
+    try {
+      const {
+        projectId,
+        endpoint,
+        accessToken,
+        request,
+        response,
+        statusCode,
+        duration,
+        ip,
+        callDate
+      } = requestTrackingInput;
+
+      const requestEntity = this.requestRepository.create({
+        projectId,
+        endpoint,
+        accessToken,
+        request: JSON.stringify(request),
+        response: JSON.stringify(response),
+        statusCode,
+        duration,
+        ip,
+        callDate
+      });
+
+      return await this.requestRepository.save(requestEntity);
+    } catch (error) {
+      // Manejar el error aquí
+      throw new Error('No se pudo crear la solicitud: ' + error.message);
+    }
   }
 }
