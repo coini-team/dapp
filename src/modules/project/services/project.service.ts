@@ -7,7 +7,7 @@ import {
   Logger,
   ConflictException,
   ForbiddenException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -34,7 +34,7 @@ export class ProjectService {
     private readonly _userRepository: Repository<User>,
     @InjectRepository(Access)
     private readonly _accessRepository: Repository<Access>,
-  ) { }
+  ) {}
 
   /**
    * @memberof ProjectService
@@ -278,5 +278,35 @@ export class ProjectService {
     // Check if Project exists.
     if (!project) throw new NotFoundException('Project not found.');
     return project;
+  }
+
+  /**
+   * @memberof ProjectService
+   * @param {User} user
+   * @param {string} apiKey
+   * @returns {Promise<boolean>}
+   */
+  async validateApiKey(user: User, apiKey: string): Promise<boolean> {
+    // Search for Project.
+    const project = await this.projectRepository.findOne({
+      where: { accessToken: apiKey },
+    });
+
+    // Search for Access.
+    const access = await this._accessRepository.findOne({
+      where: { user: user, project: project },
+    });
+
+    console.log('Access:', access);
+    console.log('Project:', project);
+
+    // Check if Access and Project exists.
+    if (!access || !project) {
+      throw new ForbiddenException(
+        'You do not have permission to perform this action.',
+      );
+    }
+
+    return true;
   }
 }

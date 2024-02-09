@@ -5,17 +5,21 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Query,
+  Query, UseGuards,
   UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+  ValidationPipe
+} from "@nestjs/common";
 
 // Local Dependencies.
 import { WalletService } from '../../wallet/services/wallet.service';
 import { TokenService } from '../services/token.service';
 import { DeployTokenDto } from '../dto/deploy-token.dto';
+import { AuthGuard } from "@nestjs/passport";
+import { RoleGuard } from "../../role/guards/role.guard";
+import { ApiKeyGuard } from "../../project/guards/api-key.guard";
 
 @Controller('token')
+@UseGuards(AuthGuard('jwt'), RoleGuard, ApiKeyGuard)
 export class TokenController {
   constructor(
     private readonly tokenService: TokenService,

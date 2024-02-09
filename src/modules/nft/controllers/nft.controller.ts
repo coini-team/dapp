@@ -11,15 +11,20 @@ import {
   UsePipes,
   ValidationPipe,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 
 // Local Dependencies.
 import { NftService } from '../services/nft.service';
 import { WalletService } from '../../wallet/services/wallet.service';
 import { DeployNftDto } from '../dto/deploy-nft.dto';
-import { AuthGuard } from "@nestjs/passport";
+import { AuthGuard } from '@nestjs/passport';
+import { RoleProtect } from '../../role/decorators/role.decorator';
+import { RoleGuard } from "../../role/guards/role.guard";
+import { ApiKeyGuard } from "../../project/guards/api-key.guard";
 
 @Controller('nft')
+@UseGuards(AuthGuard('jwt'), RoleGuard, ApiKeyGuard)
 export class NftController {
   constructor(
     private readonly nftService: NftService,
@@ -35,7 +40,7 @@ export class NftController {
   @Post()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
-  // @UseGuards(AuthGuard(), ApiKeyGuard)
+  @RoleProtect('MEMBER', 'SUPER_ADMIN')
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
     @Query('chain') chain: string,

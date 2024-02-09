@@ -8,16 +8,21 @@ import {
   Param,
   Delete,
   Headers,
-  Query,
-} from '@nestjs/common';
+  Query, UseGuards
+} from "@nestjs/common";
 
 // Local Dependencies.
 import { ProjectService } from '../services/project.service';
 import { CreateProjectDto } from '../dto/create-project.dto';
 import { UpdateProjectDto } from '../dto/update-project.dto';
 import { Project } from '../entities/project.entity';
+import { RoleProtect } from "../../role/decorators/role.decorator";
+import { AuthGuard } from "@nestjs/passport";
+import { RoleGuard } from "../../role/guards/role.guard";
+import { ApiKeyGuard } from "../guards/api-key.guard";
 
 @Controller('project')
+@UseGuards(AuthGuard(), RoleGuard, ApiKeyGuard)
 export class ProjectController {
   constructor(private readonly _projectService: ProjectService) {}
 
@@ -29,6 +34,7 @@ export class ProjectController {
    * @returns {Promise<{ status: string; message: string; project_id: string }>}
    */
   @Post()
+  @RoleProtect('MEMBER','ADMIN', 'SUPER_ADMIN')
   create(
     @Headers('authorization') authHeader: string,
     @Body() createProjectDto: CreateProjectDto,
@@ -45,6 +51,7 @@ export class ProjectController {
    * @returns {Promise<Project[]>}
    */
   @Get()
+  @RoleProtect('MEMBER','ADMIN', 'SUPER_ADMIN')
   findAll(
     @Headers('authorization') authHeader: string,
     @Query('page') page: number,
@@ -61,6 +68,7 @@ export class ProjectController {
    * @returns {Promise<Project>}
    */
   @Get(':id')
+  @RoleProtect('MEMBER','ADMIN', 'SUPER_ADMIN')
   findOne(
     @Headers('authorization') authHeader: string,
     @Param('id') id: string,
@@ -77,6 +85,7 @@ export class ProjectController {
    * @returns {Promise<{ status: string; message: string }>}
    */
   @Patch(':id')
+  @RoleProtect('MEMBER','ADMIN', 'SUPER_ADMIN')
   update(
     @Headers('authorization') authHeader: string,
     @Param('id') id: string,
@@ -93,6 +102,7 @@ export class ProjectController {
    * @returns {Promise<{ status: string; message: string }>}
    */
   @Delete()
+  @RoleProtect('MEMBER','ADMIN', 'SUPER_ADMIN')
   remove(
     @Headers('authorization') authHeader: string,
     @Query('id') id: string,
