@@ -17,6 +17,7 @@ import {
 import { NftService } from '../services/nft.service';
 import { WalletService } from '../../wallet/services/wallet.service';
 import { DeployNftDto } from '../dto/deploy-nft.dto';
+import { AuthGuard } from "@nestjs/passport";
 
 @Controller('nft')
 export class NftController {
@@ -34,6 +35,7 @@ export class NftController {
   @Post()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
+  // @UseGuards(AuthGuard(), ApiKeyGuard)
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
     @Query('chain') chain: string,

@@ -9,9 +9,10 @@ import { ConfigModule } from '../../config/config.module';
 import { TokenService } from './services/token.service';
 import { WalletModule } from '../wallet/wallet.module';
 import { Middleware } from '../../middleware/nft.middleware';
+import { RequestModule } from "../requests/request.module";
 
 @Module({
-  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network])],
+  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network]), RequestModule],
   controllers: [TokenController],
   providers: [TokenService],
   exports: [TokenService],

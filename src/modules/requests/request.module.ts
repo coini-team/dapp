@@ -8,12 +8,9 @@ import { RequestService } from './services/request.service';
 import { RequestController } from './controllers/request.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-        Requests,
-    ])
-  ],
+  imports: [TypeOrmModule.forFeature([Requests])],
   providers: [RequestService],
   controllers: [RequestController],
+  exports: [RequestService],
 })
 export class RequestModule {}

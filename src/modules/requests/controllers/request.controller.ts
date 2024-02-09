@@ -9,10 +9,10 @@ import { RequestService } from '../services/request.service';
 
 @Controller('requests')
 export class RequestController {
-  constructor(private readonly requestService: RequestService) { }
+  constructor(private readonly _requestService: RequestService) { }
 
   @Post()
   async create(@Body() apiTrackingInput: RequestDto): Promise<Requests> {
-    return this.requestService.create(apiTrackingInput);
+    return await this._requestService.create(apiTrackingInput);
   }
 }

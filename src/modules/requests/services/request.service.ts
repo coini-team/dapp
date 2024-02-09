@@ -7,29 +7,6 @@ import { Repository } from 'typeorm';
 import { Requests } from '../entities/request.entity';
 import { RequestDto } from '../dto/request.dto';
 
-// @Injectable()
-// export class RequestService {
-//   constructor(
-//     @InjectRepository(Requests)
-//     private readonly requestRepository: Repository<Requests>,
-//   ) {}
-
-//   async create(requestTrackingInput: RequestDto): Promise<Requests> {
-//     // const requestTracking = this.requestRepository.create(requestTrackingInput);
-//     const requestEntity = new Requests();
-//     requestEntity.ProjectId = requestTrackingInput.projectId;
-//     requestEntity.endpoint = requestTrackingInput.endpoint;
-//     requestEntity.accessToken = requestTrackingInput.accessToken;
-//     requestEntity.request = JSON.stringify(requestTrackingInput.request); 
-//     requestEntity.response = JSON.stringify(requestTrackingInput.response); 
-//     requestEntity.statusCode = requestTrackingInput.statusCode; 
-//     requestEntity.duration = requestTrackingInput.duration; 
-//     requestEntity.ip = requestTrackingInput.ip; 
-//     requestEntity.callDate = requestTrackingInput.callDate; 
-//     return await this.requestRepository.save(requestEntity);
-//   }
-// }
-
 @Injectable()
 export class RequestService {
   constructor(
