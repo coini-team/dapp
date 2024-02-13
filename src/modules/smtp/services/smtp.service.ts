@@ -118,4 +118,22 @@ export class SmtpService {
       throw new BadRequestException(error.message);
     }
   }
+
+  sendEmailToSuccessfullPasswordReset(name: string, email: string) {
+    try {
+      // Prepare and Send Email.
+      this.mailerService.sendMail({
+        to: email,
+        subject: 'Contraseña Restablecida',
+        template: `${process.cwd()}/src/modules/smtp/templates/succesfullPasswordReset.hbs`,
+        context: {
+          name: name,
+          message: 'Contraseña Restablecida',
+        },
+      });
+    } catch (error) {
+      this._logger.error(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
 }

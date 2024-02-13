@@ -374,8 +374,14 @@ export class AuthService {
     // Set new password to user.
     user.password = hashedPassword;
 
+    // Remove reset password token.
+    user.resetPasswordToken = null;
+
     // Save user.
     await this._userRepository.save(user);
+
+    // Send reset password email.
+    this._smtpService.sendEmailToSuccessfullPasswordReset(user.name, user.email);
 
     return {
       message: 'Password reset successfully',
