@@ -7,6 +7,7 @@ import {
   Logger,
   ConflictException,
   ForbiddenException,
+  UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -33,7 +34,7 @@ export class ProjectService {
     private readonly _userRepository: Repository<User>,
     @InjectRepository(Access)
     private readonly _accessRepository: Repository<Access>,
-  ) {}
+  ) { }
 
   /**
    * @memberof ProjectService
@@ -69,6 +70,9 @@ export class ProjectService {
         refreshToken: '',
       });
 
+      // Save Project.
+      const savedProject = await this.projectRepository.save(project);
+
       if (!project)
         throw new ConflictException('Project could not be created.');
 
@@ -80,9 +84,6 @@ export class ProjectService {
 
       // Save Access.
       await this._accessRepository.save(access);
-
-      // Save Project.
-      const savedProject = await this.projectRepository.save(project);
 
       // Generate Access Token.
       const {
@@ -258,5 +259,24 @@ export class ProjectService {
       this._logger.error(error);
       throw new BadRequestException(error);
     }
+  }
+
+  async getProjectToken(projectHeader: string): Promise<Project> {
+    // Check if Project header is provided.
+    if (!projectHeader)
+      throw new UnauthorizedException('Project header is missing.');
+    // Verify if Project header is valid.
+    const token = projectHeader.split(' ')[1];
+    // Check if token is provided.
+    if (!token) throw new UnauthorizedException('Invalid token.');
+    // Verify if token is valid.
+    const decodedToken = this._authService.verifyToken(token);
+    // Search for Project.
+    const project = await this.projectRepository.findOne({
+      where: { id: decodedToken.id },
+    });
+    // Check if Project exists.
+    if (!project) throw new NotFoundException('Project not found.');
+    return project;
   }
 }

@@ -1,5 +1,5 @@
 // Third Party Dependencies.
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Local Dependencies.
@@ -8,11 +8,19 @@ import { Network } from '../chain/entities/network.entity';
 import { ConfigModule } from '../../config/config.module';
 import { TokenService } from './services/token.service';
 import { WalletModule } from '../wallet/wallet.module';
+import { Middleware } from '../../middleware/nft.middleware';
+import { RequestModule } from "../requests/request.module";
 
 @Module({
-  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network])],
+  imports: [ConfigModule, WalletModule, TypeOrmModule.forFeature([Network]), RequestModule],
   controllers: [TokenController],
   providers: [TokenService],
   exports: [TokenService],
 })
-export class TokenModule {}
+export class TokenModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(Middleware) // Aplicar el middleware
+      .forRoutes(TokenController); // Para todos los controladores del módulo nft
+  }
+}
