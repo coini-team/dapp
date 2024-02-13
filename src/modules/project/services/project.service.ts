@@ -7,7 +7,7 @@ import {
   Logger,
   ConflictException,
   ForbiddenException,
-  UnauthorizedException
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -34,7 +34,7 @@ export class ProjectService {
     private readonly _userRepository: Repository<User>,
     @InjectRepository(Access)
     private readonly _accessRepository: Repository<Access>,
-  ) { }
+  ) {}
 
   /**
    * @memberof ProjectService
@@ -267,6 +267,8 @@ export class ProjectService {
       throw new UnauthorizedException('Project header is missing.');
     // Verify if Project header is valid.
     const token = projectHeader.split(' ')[1];
+
+    console.log('token', token);
     // Check if token is provided.
     if (!token) throw new UnauthorizedException('Invalid token.');
     // Verify if token is valid.
@@ -278,5 +280,27 @@ export class ProjectService {
     // Check if Project exists.
     if (!project) throw new NotFoundException('Project not found.');
     return project;
+  }
+
+  /**
+   * @memberof ProjectService
+   * @param {User} user
+   * @param {string} apiKey
+   * @returns {Promise<boolean>}
+   */
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    // Search for Project.
+    const project = await this.projectRepository.findOne({
+      where: { accessToken: apiKey },
+    });
+
+    // Check if Access and Project exists.
+    if (!project) {
+      throw new ForbiddenException(
+        'You do not have permission to perform this action.',
+      );
+    }
+
+    return true;
   }
 }

@@ -6,11 +6,14 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
-} from '@nestjs/common';
+  Post, UseGuards
+} from "@nestjs/common";
 import { Role } from '../entities/role.entity';
 import { RoleService } from '../services/role.service';
 import { GetRoleDto } from '../dto';
+import { AuthGuard } from "@nestjs/passport";
+import { RoleGuard } from "../guards/role.guard";
+import { RoleProtect } from "../decorators/role.decorator";
 
 @Controller('role')
 export class RoleController {

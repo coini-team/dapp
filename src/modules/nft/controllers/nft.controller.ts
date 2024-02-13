@@ -11,15 +11,20 @@ import {
   UsePipes,
   ValidationPipe,
   Headers,
+  UseGuards,
 } from '@nestjs/common';
 
 // Local Dependencies.
 import { NftService } from '../services/nft.service';
 import { WalletService } from '../../wallet/services/wallet.service';
 import { DeployNftDto } from '../dto/deploy-nft.dto';
-import { AuthGuard } from "@nestjs/passport";
+import { AuthGuard } from '@nestjs/passport';
+import { RoleProtect } from '../../role/decorators/role.decorator';
+import { RoleGuard } from '../../role/guards/role.guard';
+import { ApiKeyGuard } from '../../project/guards/api-key.guard';
 
 @Controller('nft')
+@UseGuards(ApiKeyGuard)
 export class NftController {
   constructor(
     private readonly nftService: NftService,
@@ -35,10 +40,11 @@ export class NftController {
   @Post()
   @UsePipes(ValidationPipe)
   @HttpCode(HttpStatus.CREATED)
-  // @UseGuards(AuthGuard(), ApiKeyGuard)
+  @RoleProtect('MEMBER', 'ADMIN', 'SUPER_ADMIN')
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
     @Query('network') network: string,
+    @Headers('x-api-key') authHeader: string,
   ): Promise<any> {
     try {
       const rpcUrl = await this.walletService.getRpcUrl(network);
@@ -58,12 +64,14 @@ export class NftController {
   }
 
   @Get('owner/:tokenId')
+  @RoleProtect('MEMBER', 'ADMIN', 'SUPER_ADMIN')
   async getOwnerOfERC721Token(@Param('tokenId') tokenId: string) {
     const owner = await this.nftService.ownerOfERC721(tokenId);
     return { owner };
   }
 
   @Get('token_URI/:tokenId')
+  @RoleProtect('MEMBER', 'ADMIN', 'SUPER_ADMIN')
   async getUriOfToken(@Param('tokenId') tokenId: string) {
     const tokenURI = await this.nftService.getTokenURI(tokenId);
     return { tokenURI };
