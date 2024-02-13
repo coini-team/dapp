@@ -20,7 +20,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../../modules/user/entities/user.entity';
 import { SmtpService } from 'src/modules/smtp/services/smtp.service';
-import {StatusEnum} from "../../shared/enums/status.enum";
+import { StatusEnum } from '../../shared/enums/status.enum';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +28,11 @@ export class AuthService {
    * @memberof AuthService
    * @description This method is used to create an instance of AuthService class.
    * @param messageBirdService
-   * @param jwtService
+   * @param _jwtService
+   * @param _authRepository
+   * @param _userRepository
+   * @param _smtpService
+   * @param configService
    */
   constructor(
     private readonly messageBirdService: MessageService,
@@ -77,7 +81,7 @@ export class AuthService {
   }> {
     const { email, password, wallet } = user;
 
-    let userExist;
+    let userExist: User;
 
     if (
       (email && wallet) ||
@@ -90,12 +94,12 @@ export class AuthService {
     } else if (email && password) {
       // Check if user exist and is active.
       userExist = await this._userRepository.findOne({
-        where: { email, status: StatusEnum.ACTIVE},
+        where: { email, status: StatusEnum.ACTIVE },
       });
     } else if (wallet) {
       // Check if user exist and is active.
       userExist = await this._userRepository.findOne({
-        where: { wallet, status: StatusEnum.ACTIVE},
+        where: { wallet, status: StatusEnum.ACTIVE },
       });
     }
 
@@ -285,5 +289,97 @@ export class AuthService {
     // Check if User exists.
     if (!user) throw new NotFoundException('User not found.');
     return user;
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to reset user password.
+   * @param {string} email
+   * @returns {Promise<void>}
+   */
+  async forgotPassword(email: string) {
+    try {
+
+      console.log('email', email);
+
+      // Search for user by email.
+      const user: User = await this._userRepository.findOne({
+        where: { email , status: StatusEnum.ACTIVE },
+      });
+
+      // If user not found throw error.
+      if (!user) return new NotFoundException('User not found');
+
+      // Generate Token for verification.
+      const token: string = await this.generateResetPasswordToken(email);
+
+      // Set reset password token to user.
+      user.resetPasswordToken = token;
+
+      // Save user.
+      await this._userRepository.save(user);
+
+      // Encoded token to URL.
+      const encodedToken = encodeURIComponent(token);
+
+      // Send reset password email.
+      this._smtpService.sendEmailToResetPassword(
+        user.name,
+        user.email,
+        encodedToken,
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /**
+   * @memberof AuthService
+   * @description This method is used to generate reset password token.
+   * @param {string} email
+   * @returns {Promise<string>}
+   */
+  private async generateResetPasswordToken(email: string) {
+    // Generate Token for verification. ( JWT ). 12 hours.
+    return this._jwtService.sign(
+      { email, type: 'reset-password' },
+      {
+        secret: this.configService.get(JwtEnv.JWT_REFRESH_SECRET),
+        expiresIn: '12h',
+      },
+    );
+  }
+
+  async resetPassword(resetPasswordDto: {
+    token: string;
+    password: string;
+  }): Promise<{ message: string; status: number }> {
+    // Destructure resetPasswordDto.
+    const { token, password } = resetPasswordDto;
+
+    // Find user by reset password token.
+    const user: User = await this._userRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
+
+    // If user not found throw error.
+    if (!user) throw new NotFoundException('User not found');
+
+    // Generate Salt and Hash password.
+    const salt: string = await genSalt(10);
+
+    // Hash password.
+    const hashedPassword: string = await hash(password, salt);
+
+    // Set new password to user.
+    user.password = hashedPassword;
+
+    // Save user.
+    await this._userRepository.save(user);
+
+    return {
+      message: 'Password reset successfully',
+      status: 200,
+    };
   }
 }

@@ -54,11 +54,16 @@ export class AuthRepository extends Repository<User> {
     // Set activation token to user.
     newUser.activationToken = token;
 
+    // Encoded token to URL.
+    const encodedToken = encodeURIComponent(token);
+
+    console.log('encodedToken', encodedToken);
+
     // Send Verification Email.
     await this._smtpService.sendEmailToConfirmEmailAddress(
       newUser.name,
       newUser.email,
-      newUser.activationToken,
+      encodedToken,
     );
 
     // Save user.
@@ -69,6 +74,9 @@ export class AuthRepository extends Repository<User> {
   }
 
   async activateAccount(token: string): Promise<GetUserDto> {
+    // Decode the encoded token ( URL ).
+    token = decodeURIComponent(token);
+
     // Find user by activation token.
     const user = await this._userRepository.findOne({
       where: { activationToken: token },

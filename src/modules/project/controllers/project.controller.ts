@@ -32,9 +32,11 @@ export class ProjectController {
   create(
     @Headers('authorization') authHeader: string,
     @Body() createProjectDto: CreateProjectDto,
-  ): Promise<{ status: string; message: string; project_id: string }> {
-    return this._projectService.create(authHeader, createProjectDto);
+  ) {
+    // return this._projectService.create(authHeader, createProjectDto);
+    return 'ok'
   }
+
 
   /**
    * @memberof ProjectController

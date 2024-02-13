@@ -97,4 +97,25 @@ export class SmtpService {
       throw new BadRequestException(error.message);
     }
   }
+
+  sendEmailToResetPassword(name: string, email: string, token: string) {
+    try {
+      // Prepare and Send Email.
+      this.mailerService.sendMail({
+        to: email,
+        subject: 'Restablecer Contraseña',
+        template: `${process.cwd()}/src/modules/smtp/templates/resetPassword.hbs`,
+        context: {
+          name: name,
+          url: `${this._configService.get(
+            Coini.COINI_BACKOFFICE_URL,
+          )}/reset-password/${token}`,
+          message: 'Restablecer Contraseña',
+        },
+      });
+    } catch (error) {
+      this._logger.error(error.message);
+      throw new BadRequestException(error.message);
+    }
+  }
 }
