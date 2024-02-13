@@ -267,6 +267,8 @@ export class ProjectService {
       throw new UnauthorizedException('Project header is missing.');
     // Verify if Project header is valid.
     const token = projectHeader.split(' ')[1];
+
+    console.log('token', token);
     // Check if token is provided.
     if (!token) throw new UnauthorizedException('Invalid token.');
     // Verify if token is valid.
@@ -286,22 +288,14 @@ export class ProjectService {
    * @param {string} apiKey
    * @returns {Promise<boolean>}
    */
-  async validateApiKey(user: User, apiKey: string): Promise<boolean> {
+  async validateApiKey(apiKey: string): Promise<boolean> {
     // Search for Project.
     const project = await this.projectRepository.findOne({
       where: { accessToken: apiKey },
     });
 
-    // Search for Access.
-    const access = await this._accessRepository.findOne({
-      where: { user: user, project: project },
-    });
-
-    console.log('Access:', access);
-    console.log('Project:', project);
-
     // Check if Access and Project exists.
-    if (!access || !project) {
+    if (!project) {
       throw new ForbiddenException(
         'You do not have permission to perform this action.',
       );

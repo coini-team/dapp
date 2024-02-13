@@ -19,10 +19,9 @@ import { Project } from '../entities/project.entity';
 import { RoleProtect } from "../../role/decorators/role.decorator";
 import { AuthGuard } from "@nestjs/passport";
 import { RoleGuard } from "../../role/guards/role.guard";
-import { ApiKeyGuard } from "../guards/api-key.guard";
 
 @Controller('project')
-@UseGuards(AuthGuard(), RoleGuard, ApiKeyGuard)
+@UseGuards(AuthGuard(), RoleGuard)
 export class ProjectController {
   constructor(private readonly _projectService: ProjectService) {}
 

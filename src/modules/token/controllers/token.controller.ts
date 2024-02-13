@@ -21,7 +21,7 @@ import { ApiKeyGuard } from '../../project/guards/api-key.guard';
 import { RoleProtect } from '../../role/decorators/role.decorator';
 
 @Controller('token')
-@UseGuards(AuthGuard('jwt'), RoleGuard, ApiKeyGuard)
+@UseGuards(ApiKeyGuard)
 export class TokenController {
   constructor(
     private readonly tokenService: TokenService,

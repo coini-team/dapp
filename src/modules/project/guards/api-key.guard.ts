@@ -13,15 +13,13 @@ export class ApiKeyGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const apiKey = request.headers['x-api-key'];
 
-    const user = request.user;
-
     if (!apiKey) {
       return false;
     }
-    return this.validateApiKey(user, apiKey);
+    return this.validateApiKey(apiKey);
   }
 
-  async validateApiKey(user: User, apiKey: string): Promise<boolean> {
-    return await this.projectService.validateApiKey(user, apiKey);
+  async validateApiKey(apiKey: string): Promise<boolean> {
+    return await this.projectService.validateApiKey(apiKey);
   }
 }

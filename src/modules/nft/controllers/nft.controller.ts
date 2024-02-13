@@ -24,7 +24,7 @@ import { RoleGuard } from '../../role/guards/role.guard';
 import { ApiKeyGuard } from '../../project/guards/api-key.guard';
 
 @Controller('nft')
-@UseGuards(AuthGuard('jwt'), RoleGuard, ApiKeyGuard)
+@UseGuards(ApiKeyGuard)
 export class NftController {
   constructor(
     private readonly nftService: NftService,
@@ -44,7 +44,7 @@ export class NftController {
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
     @Query('chain') chain: string,
-    @Headers('authorization') authHeader: string,
+    @Headers('x-api-key') authHeader: string,
   ): Promise<any> {
     try {
       const rpcUrl = await this.walletService.getRpcUrl(chain);
