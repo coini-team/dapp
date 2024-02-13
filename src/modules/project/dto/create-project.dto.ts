@@ -1,6 +1,6 @@
 // Third Party Dependencies.
 import { IsInt, IsString, Length } from 'class-validator';
-import { Chain } from 'src/modules/chain/entities/chain.entity';
+import { Network } from 'src/modules/chain/entities/network.entity';
 
 export class CreateProjectDto {
   @IsString()
@@ -23,5 +23,5 @@ export class CreateProjectDto {
   description: string;
 
   @IsString()
-  chain: Chain;
+  network_id: Network;
 }

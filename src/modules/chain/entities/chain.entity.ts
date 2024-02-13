@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 
 // Local Dependencies.
-import { Project } from 'src/modules/project/entities/project.entity';
 import { StatusEnum } from '../../../shared/enums/status.enum';
 import { Network } from './network.entity';
 
@@ -26,9 +25,6 @@ export class Chain {
 
   @OneToMany(() => Network, (network) => network.chain)
   networks: Network[];
-
-  @OneToMany(() => Project, (project) => project.chain)
-  projects: Project[];
 
   @Column({
     type: 'enum',

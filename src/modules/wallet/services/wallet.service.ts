@@ -29,9 +29,9 @@ export class WalletService {
   }
 
   // traer network url
-  public async getRpcUrl(chain: string): Promise<string> {
-    const network = await this.networkRepository.findOne({ name: chain });
-    return network.rpc_url;
+  public async getRpcUrl(network: string): Promise<string> {
+    const networkUrl = await this.networkRepository.findOne({ rpc_chain_name: network });
+    return networkUrl.rpc_url;
   }
 
   /**

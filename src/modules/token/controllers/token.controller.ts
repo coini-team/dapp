@@ -33,10 +33,10 @@ export class TokenController {
   @HttpCode(HttpStatus.CREATED)
   async deployERC20Token(
     @Body() tokenParams: DeployTokenDto,
-    @Query('chain') chain: string,
+    @Query('network') network: string,
   ): Promise<any> {
     try {
-      const rpcUrl = await this.walletService.getRpcUrl(chain);
+      const rpcUrl = await this.walletService.getRpcUrl(network);
       // Get Wallet to Sign.
       const wallet = this.walletService.getWallet(rpcUrl);
       //call method to deploy the ERC20 token
