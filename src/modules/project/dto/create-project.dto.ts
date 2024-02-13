@@ -23,5 +23,5 @@ export class CreateProjectDto {
   description: string;
 
   @IsString()
-  network: Network;
+  network_id: Network;
 }

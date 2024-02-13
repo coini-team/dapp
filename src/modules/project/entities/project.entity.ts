@@ -54,7 +54,7 @@ export class Project {
   accessList: Access[];
 
   @ManyToOne(() => Network, (network) => network.rpc_chain_name)
-  @JoinColumn({ name: 'network' }) 
+  @JoinColumn({ name: 'network_id' }) 
   network: Network;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
