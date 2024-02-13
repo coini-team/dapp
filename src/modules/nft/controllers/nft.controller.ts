@@ -43,11 +43,11 @@ export class NftController {
   @RoleProtect('MEMBER', 'ADMIN', 'SUPER_ADMIN')
   public async deployERC721Token(
     @Body() tokenParams: DeployNftDto,
-    @Query('chain') chain: string,
+    @Query('network') network: string,
     @Headers('x-api-key') authHeader: string,
   ): Promise<any> {
     try {
-      const rpcUrl = await this.walletService.getRpcUrl(chain);
+      const rpcUrl = await this.walletService.getRpcUrl(network);
       // Get Wallet to Sign.
       const wallet = this.walletService.getWallet(rpcUrl);
       //call method to deploy the ERC721 token

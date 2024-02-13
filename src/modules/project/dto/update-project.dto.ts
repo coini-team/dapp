@@ -1,7 +1,7 @@
 import { IsEnum, IsInt, IsString, MaxLength } from 'class-validator';
 import { ModeEnum } from '../../../shared/enums/mode.enum';
 import { StatusEnum } from '../../../shared/enums/status.enum';
-import { Chain } from 'src/modules/chain/entities/chain.entity';
+import { Network } from 'src/modules/chain/entities/network.entity';
 
 export class UpdateProjectDto {
   @IsString()
@@ -21,5 +21,5 @@ export class UpdateProjectDto {
   organization_id: number;
 
   @IsString()
-  chain: Chain;
+  network: Network;
 }

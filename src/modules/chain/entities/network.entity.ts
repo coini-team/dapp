@@ -7,9 +7,11 @@ import {
   ManyToOne,
   PrimaryColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 // Local Dependencies.
+import { Project } from 'src/modules/project/entities/project.entity';
 import { StatusEnum } from '../../../shared/enums/status.enum';
 import { Chain } from './chain.entity';
 
@@ -35,6 +37,9 @@ export class Network {
 
   @Column({ length: 100 })
   rpc_ws: string;
+
+  @OneToMany(() => Project, (project) => project.network)
+  projects: Project[];
 
   @Column({
     type: 'enum',
