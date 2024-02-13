@@ -10,8 +10,9 @@ import {
 } from 'typeorm';
 import { StatusEnum } from '../../../shared/enums/status.enum';
 import { ModeEnum } from 'src/shared/enums/mode.enum';
-import { Chain } from 'src/modules/chain/entities/chain.entity';
+// import { Chain } from 'src/modules/chain/entities/chain.entity';
 import { Access } from 'src/modules/user/entities/access.entity';
+import { Network } from 'src/modules/chain/entities/network.entity';
 
 @Entity()
 export class Project {
@@ -52,9 +53,9 @@ export class Project {
   @OneToMany(() => Access, (access) => access.project)
   accessList: Access[];
 
-  @ManyToOne(() => Chain, (chain) => chain.networks)
-  @JoinColumn({ name: 'chain_id' })
-  chain: Chain;
+  @ManyToOne(() => Network, (network) => network.rpc_chain_name)
+  @JoinColumn({ name: 'network' }) 
+  network: Network;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
