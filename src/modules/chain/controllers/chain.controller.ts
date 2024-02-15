@@ -3,7 +3,7 @@ import { ChainService } from '../services/chain.service';
 import { Chain } from '../entities/chain.entity';
 import { Network } from '../entities/network.entity';
 
-@Controller('chain')
+@Controller('chains')
 export class ChainController {
   constructor(private readonly chainService: ChainService) { }
 
@@ -23,7 +23,7 @@ export class ChainController {
   * @param {string} id
   * @returns {Promise<Chain[]>}
   */
-  @Get(':id')
+  @Get(':id/networks')
   getNetworkById(
     @Param('id') id: string,
   ): Promise<Network[]> {
