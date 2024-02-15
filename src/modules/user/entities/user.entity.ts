@@ -49,6 +49,9 @@ export class User {
   @Column({ name: 'activation_token', nullable: true, type: 'varchar' })
   activationToken: string;
 
+  @Column({ name: 'reset_password_token', nullable: true, type: 'text' })
+  resetPasswordToken: string;
+
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: Date;
 

@@ -57,4 +57,28 @@ export class AuthController {
   async activateAccount(@Body('token') token: string) {
     return this._authService.activateAccount(token);
   }
+
+  /**
+   * @memberof AuthController
+   * @description This method is used to send a reset password email.
+   * @param email
+   * @returns {Promise<void>}
+   */
+  @Post('forgot-password')
+  @UsePipes(ValidationPipe)
+  async forgotPassword(@Body('email') email: string) {
+    return this._authService.forgotPassword(email);
+  }
+
+  /**
+   * @memberof AuthController
+   * @description This method is used to reset a user password.
+   * @param resetPasswordDto
+   * @returns {Promise<void>}
+   */
+  @Post('reset-password')
+  @UsePipes(ValidationPipe)
+  async resetPassword(@Body() resetPasswordDto: { token: string; password: string }) {
+    return this._authService.resetPassword(resetPasswordDto);
+  }
 }
