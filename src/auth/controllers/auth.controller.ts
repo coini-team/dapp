@@ -1,8 +1,8 @@
 // Third Party Dependencies.
 import {
   Body,
-  Controller,
-  Post,
+  Controller, Get,
+  Post, Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -81,4 +81,18 @@ export class AuthController {
   async resetPassword(@Body() resetPasswordDto: { token: string; password: string }) {
     return this._authService.resetPassword(resetPasswordDto);
   }
+
+  /**
+   * @memberof AuthController
+   * @description This method is used to validate a user reset password token.
+   * @param resetToken { query parameter }
+   * @returns {Promise<void>}
+   */
+  @Get('validate-reset-password-token')
+  @UsePipes(ValidationPipe)
+  async validateResetPasswordToken(@Query('resetToken') resetToken: string) {
+    return this._authService.validateResetPasswordToken(resetToken);
+  }
+
+
 }

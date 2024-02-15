@@ -299,12 +299,11 @@ export class AuthService {
    */
   async forgotPassword(email: string) {
     try {
-
       console.log('email', email);
 
       // Search for user by email.
       const user: User = await this._userRepository.findOne({
-        where: { email , status: StatusEnum.ACTIVE },
+        where: { email, status: StatusEnum.ACTIVE },
       });
 
       // If user not found throw error.
@@ -381,11 +380,37 @@ export class AuthService {
     await this._userRepository.save(user);
 
     // Send reset password email.
-    this._smtpService.sendEmailToSuccessfullPasswordReset(user.name, user.email);
+    this._smtpService.sendEmailToSuccessfullPasswordReset(
+      user.name,
+      user.email,
+    );
 
     return {
       message: 'Password reset successfully',
       status: 200,
     };
+  }
+
+  validateResetPasswordToken(resetToken: string) {
+    try {
+      // Decode urlEncoded token.
+      const token = decodeURIComponent(resetToken);
+
+      // Verify token.
+      const decodedToken = this._jwtService.verify(token, {
+        secret: this.configService.get(JwtEnv.JWT_REFRESH_SECRET),
+      });
+
+      // If token is invalid throw error.
+      if (!decodedToken) throw new UnauthorizedException('Invalid token');
+
+      // Return Success.
+      return {
+        message: 'Token is valid',
+        status: 200,
+      };
+    } catch (error) {
+      throw new BadRequestException('Internal Server Error');
+    }
   }
 }
